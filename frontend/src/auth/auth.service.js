@@ -17,9 +17,12 @@ export const login = async ({ loginData }) => {
       { data, status },
       {
         notifyOnSuccess: false,
-        notifyOnFailed: true,
+        notifyOnFailed: false,
       }
     );
+    if (data.success === false) {
+      return { success: false, message: data.message };
+    }
     return data;
   } catch (error) {
     return errorHandler(error);

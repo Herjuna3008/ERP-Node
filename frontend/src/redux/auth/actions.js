@@ -1,6 +1,7 @@
 import * as actionTypes from './types';
 import * as authService from '@/auth';
 import { request } from '@/request';
+import { notification } from 'antd';
 
 export const login =
   ({ loginData }) =>
@@ -24,6 +25,9 @@ export const login =
         payload: data.result,
       });
     } else {
+      if (data?.message) {
+        notification.error({ message: data.message });
+      }
       dispatch({
         type: actionTypes.REQUEST_FAILED,
       });
@@ -43,6 +47,9 @@ export const register =
         type: actionTypes.REGISTER_SUCCESS,
       });
     } else {
+      if (data?.message) {
+        notification.error({ message: data.message });
+      }
       dispatch({
         type: actionTypes.REQUEST_FAILED,
       });
@@ -71,6 +78,9 @@ export const verify =
         payload: data.result,
       });
     } else {
+      if (data?.message) {
+        notification.error({ message: data.message });
+      }
       dispatch({
         type: actionTypes.REQUEST_FAILED,
       });
@@ -99,6 +109,9 @@ export const resetPassword =
         payload: data.result,
       });
     } else {
+      if (data?.message) {
+        notification.error({ message: data.message });
+      }
       dispatch({
         type: actionTypes.REQUEST_FAILED,
       });
