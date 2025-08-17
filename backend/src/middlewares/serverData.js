@@ -1,12 +1,11 @@
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
+
 exports.getData = ({ model }) => {
-  const Model = mongoose.model(model);
-  const result = Model.find({ removed: false, enabled: true });
-  return result;
+  const repository = AppDataSource.getRepository(model);
+  return repository.find({ where: { removed: false, enabled: true } });
 };
 
 exports.getOne = ({ model, id }) => {
-  const Model = mongoose.model(model);
-  const result = Model.findOne({ _id: id, removed: false });
-  return result;
+  const repository = AppDataSource.getRepository(model);
+  return repository.findOne({ where: { id, removed: false } });
 };

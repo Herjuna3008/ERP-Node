@@ -1,5 +1,6 @@
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
 const { routesList } = require('@/models/utils');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const { globSync } = require('glob');
 const path = require('path');
@@ -28,7 +29,8 @@ const appControllers = () => {
 
   routesList.forEach(({ modelName, controllerName }) => {
     if (!hasCustomControllers.includes(controllerName)) {
-      controllers[controllerName] = createCRUDController(modelName);
+      const repository = AppDataSource.getRepository(modelName);
+      controllers[controllerName] = createCRUDController(repository);
     }
   });
 

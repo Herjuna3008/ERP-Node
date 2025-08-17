@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const authUser = async (req, res, { user, databasePassword, password, UserPasswordModel }) => {
+const authUser = async (req, res, { user, databasePassword, password, UserPasswordRepository }) => {
   const isMatch = await bcrypt.compare(databasePassword.salt + password, databasePassword.password);
 
   if (!isMatch)
@@ -14,19 +14,15 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
   if (isMatch === true) {
     const token = jwt.sign(
       {
-        id: user._id,
+        id: user.id,
       },
       process.env.JWT_SECRET,
       { expiresIn: req.body.remember ? 365 * 24 + 'h' : '24h' }
     );
 
-    await UserPasswordModel.findOneAndUpdate(
-      { user: user._id },
-      { $push: { loggedSessions: token } },
-      {
-        new: true,
-      }
-    ).exec();
+    databasePassword.loggedSessions = databasePassword.loggedSessions || [];
+    databasePassword.loggedSessions.push(token);
+    await UserPasswordRepository.save(databasePassword);
 
     // .cookie(`token_${user.cloud}`, token, {
     //     maxAge: req.body.remember ? 365 * 24 * 60 * 60 * 1000 : null,
@@ -40,7 +36,7 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
     res.status(200).json({
       success: true,
       result: {
-        _id: user._id,
+        _id: user.id,
         name: user.name,
         surname: user.surname,
         role: user.role,

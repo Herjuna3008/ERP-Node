@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Setting');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Setting');
 
 const readBySettingKey = async ({ settingKey }) => {
   try {
@@ -9,15 +8,8 @@ const readBySettingKey = async ({ settingKey }) => {
     if (!settingKey) {
       return null;
     }
-
-    const result = await Model.findOne({ settingKey });
-    // If no results found, return document not found
-    if (!result) {
-      return null;
-    } else {
-      // Return success resposne
-      return result;
-    }
+    const result = await Model.findOne({ where: { settingKey } });
+    return result || null;
   } catch {
     return null;
   }

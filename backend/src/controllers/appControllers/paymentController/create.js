@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Payment');
-const Invoice = mongoose.model('Invoice');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Payment');
+const Invoice = AppDataSource.getRepository('Invoice');
 const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
@@ -17,8 +16,7 @@ const create = async (req, res) => {
   }
 
   const currentInvoice = await Invoice.findOne({
-    _id: req.body.invoice,
-    removed: false,
+    where: { id: req.body.invoice, removed: false },
   });
 
   const {
@@ -36,24 +34,16 @@ const create = async (req, res) => {
       message: `The Max Amount you can add is ${maxAmount}`,
     });
   }
-  req.body['createdBy'] = req.admin._id;
+  req.body['createdBy'] = req.admin.id;
 
-  const result = await Model.create(req.body);
+  let result = await Model.save(Model.create(req.body));
 
-  const fileId = 'payment-' + result._id + '.pdf';
-  const updatePath = await Model.findOneAndUpdate(
-    {
-      _id: result._id.toString(),
-      removed: false,
-    },
-    { pdf: fileId },
-    {
-      new: true,
-    }
-  ).exec();
+  const fileId = 'payment-' + result.id + '.pdf';
+  result.pdf = fileId;
+  let updatePath = await Model.save(result);
   // Returning successfull response
 
-  const { _id: paymentId, amount } = result;
+  const { id: paymentId, amount } = result;
   const { id: invoiceId, total, discount, credit } = currentInvoice;
 
   let paymentStatus =
@@ -63,18 +53,10 @@ const create = async (req, res) => {
       ? 'partially'
       : 'unpaid';
 
-  const invoiceUpdate = await Invoice.findOneAndUpdate(
-    { _id: req.body.invoice },
-    {
-      $push: { payment: paymentId.toString() },
-      $inc: { credit: amount },
-      $set: { paymentStatus: paymentStatus },
-    },
-    {
-      new: true, // return the new result instead of the old one
-      runValidators: true,
-    }
-  ).exec();
+  currentInvoice.payment = [...(currentInvoice.payment || []), paymentId];
+  currentInvoice.credit = credit + amount;
+  currentInvoice.paymentStatus = paymentStatus;
+  await Invoice.save(currentInvoice);
 
   return res.status(200).json({
     success: true,

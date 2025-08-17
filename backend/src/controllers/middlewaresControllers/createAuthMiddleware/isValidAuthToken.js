@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SECRET' }) => {
   try {
-    const UserPassword = mongoose.model(userModel + 'Password');
-    const User = mongoose.model(userModel);
+    const UserPassword = AppDataSource.getRepository(userModel + 'Password');
+    const User = AppDataSource.getRepository(userModel);
 
     // const token = req.cookies[`token_${cloud._id}`];
     const authHeader = req.headers['authorization'];
@@ -29,8 +29,8 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
         jwtExpired: true,
       });
 
-    const userPasswordPromise = UserPassword.findOne({ user: verified.id, removed: false });
-    const userPromise = User.findOne({ _id: verified.id, removed: false });
+    const userPasswordPromise = UserPassword.findOne({ where: { user: { id: verified.id }, removed: false } });
+    const userPromise = User.findOne({ where: { id: verified.id, removed: false } });
 
     const [user, userPassword] = await Promise.all([userPromise, userPasswordPromise]);
 

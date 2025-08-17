@@ -3,18 +3,16 @@ require('dotenv').config({ path: '.env.local' });
 const { globSync } = require('glob');
 const fs = require('fs');
 const { generate: uniqueId } = require('shortid');
-
-const mongoose = require('mongoose');
+const Joi = require('joi');
+const bcrypt = require('bcryptjs');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const setup = async (req, res) => {
-  const Admin = mongoose.model('Admin');
-  const AdminPassword = mongoose.model('AdminPassword');
-  const Setting = mongoose.model('Setting');
-
-  const PaymentMode = mongoose.model('PaymentMode');
-  const Taxes = mongoose.model('Taxes');
-
-  const newAdminPassword = new AdminPassword();
+  const Admin = AppDataSource.getRepository('Admin');
+  const AdminPassword = AppDataSource.getRepository('AdminPassword');
+  const Setting = AppDataSource.getRepository('Setting');
+  const PaymentMode = AppDataSource.getRepository('PaymentMode');
+  const Taxes = AppDataSource.getRepository('Taxes');
 
   const { name, email, password, language, timezone, country, config = {} } = req.body;
 
@@ -39,22 +37,23 @@ const setup = async (req, res) => {
 
   const salt = uniqueId();
 
-  const passwordHash = newAdminPassword.generateHash(salt, password);
+  const passwordHash = bcrypt.hashSync(salt + password);
 
   const accountOwnner = {
     email,
     name,
     role: 'owner',
   };
-  const result = await new Admin(accountOwnner).save();
+  const result = await Admin.save(accountOwnner);
 
   const AdminPasswordData = {
     password: passwordHash,
     emailVerified: true,
     salt: salt,
-    user: result._id,
+    user: result,
+    loggedSessions: [],
   };
-  await new AdminPassword(AdminPasswordData).save();
+  await AdminPassword.save(AdminPasswordData);
 
   const settingData = [];
 
@@ -79,17 +78,17 @@ const setup = async (req, res) => {
     settingData.push(...newSettings);
   }
 
-  await Setting.insertMany(settingData);
+  for (const data of settingData) {
+    await Setting.save(data);
+  }
 
-  await Taxes.insertMany([{ taxName: 'Tax 0%', taxValue: '0', isDefault: true }]);
+  await Taxes.save({ taxName: 'Tax 0%', taxValue: '0', isDefault: true });
 
-  await PaymentMode.insertMany([
-    {
-      name: 'Default Payment',
-      description: 'Default Payment Mode (Cash , Wire Transfert)',
-      isDefault: true,
-    },
-  ]);
+  await PaymentMode.save({
+    name: 'Default Payment',
+    description: 'Default Payment Mode (Cash , Wire Transfert)',
+    isDefault: true,
+  });
 
   return res.status(200).json({
     success: true,

@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Setting');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Setting');
 
 const listBySettingKey = async (req, res) => {
   // Find document by id
@@ -24,9 +23,8 @@ const listBySettingKey = async (req, res) => {
     settingsToShow.$or.push({ settingKey });
   }
 
-  let results = await Model.find({
-    ...settingsToShow,
-  }).where('removed', false);
+  const conditions = settingKeyArray.map((settingKey) => ({ settingKey, removed: false }));
+  let results = await Model.find({ where: conditions });
 
   // If no results found, return document not found
   if (results.length >= 1) {

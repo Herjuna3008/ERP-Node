@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Quote');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Quote');
 
 const custom = require('@/controllers/pdfController');
 const { increaseBySettingKey } = require('@/middlewares/settings');
@@ -32,18 +31,12 @@ const create = async (req, res) => {
   body['taxTotal'] = taxTotal;
   body['total'] = total;
   body['items'] = items;
-  body['createdBy'] = req.admin._id;
+  body['createdBy'] = req.admin.id;
 
-  // Creating a new document in the collection
-  const result = await new Model(body).save();
-  const fileId = 'quote-' + result._id + '.pdf';
-  const updateResult = await Model.findOneAndUpdate(
-    { _id: result._id },
-    { pdf: fileId },
-    {
-      new: true,
-    }
-  ).exec();
+  let result = await Model.save(Model.create(body));
+  const fileId = 'quote-' + result.id + '.pdf';
+  result.pdf = fileId;
+  const updateResult = await Model.save(result);
   // Returning successfull response
 
   increaseBySettingKey({

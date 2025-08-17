@@ -1,14 +1,16 @@
 const custom = require('@/controllers/pdfController');
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 module.exports = downloadPdf = async (req, res, { directory, id }) => {
   try {
     const modelName = directory.slice(0, 1).toUpperCase() + directory.slice(1);
-    if (mongoose.models[modelName]) {
-      const Model = mongoose.model(modelName);
-      const result = await Model.findOne({
-        _id: id,
-      }).exec();
+    let result;
+    try {
+      const repository = AppDataSource.getRepository(modelName);
+      result = await repository.findOne({ where: { id } });
+    } catch (e) {
+      result = null;
+    }
 
       // Throw error if no result
       if (!result) {
@@ -36,7 +38,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
           });
         }
       );
-    } else {
+    if (result === null) {
       return res.status(404).json({
         success: false,
         result: null,

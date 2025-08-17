@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Quote');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Quote');
 
 const custom = require('@/controllers/pdfController');
 
@@ -46,9 +45,12 @@ const update = async (req, res) => {
   }
   // Find document by id and updates with the required fields
 
-  const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
-    new: true, // return the new result instead of the old one
-  }).exec();
+  let result = await Model.findOne({ where: { id: req.params.id, removed: false } });
+  if (!result) {
+    return res.status(404).json({ success: false, result: null, message: 'No document found' });
+  }
+  Model.merge(result, body);
+  result = await Model.save(result);
 
   // Returning successfull response
 

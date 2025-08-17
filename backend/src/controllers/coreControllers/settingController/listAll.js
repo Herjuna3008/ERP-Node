@@ -1,14 +1,13 @@
-const mongoose = require('mongoose');
-const Model = mongoose.model('Setting');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Setting');
 
 const listAll = async (req, res) => {
-  const sort = parseInt(req.query.sort) || 'desc';
+  const sort = req.query.sort === 'asc' ? 'ASC' : 'DESC';
 
-  //  Query the database for a list of all results
   const result = await Model.find({
-    removed: false,
-    isPrivate: false,
-  }).sort({ created: sort });
+    where: { removed: false, isPrivate: false },
+    order: { created: sort },
+  });
 
   if (result.length > 0) {
     return res.status(200).json({

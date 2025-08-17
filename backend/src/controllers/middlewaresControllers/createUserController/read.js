@@ -1,13 +1,11 @@
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const read = async (userModel, req, res) => {
-  const User = mongoose.model(userModel);
+  const User = AppDataSource.getRepository(userModel);
 
-  // Find document by id
   const tmpResult = await User.findOne({
-    _id: req.params.id,
-    removed: false,
-  }).exec();
+    where: { id: req.params.id, removed: false },
+  });
   // If no results found, return document not found
   if (!tmpResult) {
     return res.status(404).json({
@@ -18,7 +16,7 @@ const read = async (userModel, req, res) => {
   } else {
     // Return success resposne
     let result = {
-      _id: tmpResult._id,
+      _id: tmpResult.id,
       enabled: tmpResult.enabled,
       email: tmpResult.email,
       name: tmpResult.name,

@@ -1,20 +1,13 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Invoice');
-const ModelPayment = mongoose.model('Payment');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Invoice');
+const ModelPayment = AppDataSource.getRepository('Payment');
 
 const remove = async (req, res) => {
-  const deletedInvoice = await Model.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      removed: false,
-    },
-    {
-      $set: {
-        removed: true,
-      },
-    }
-  ).exec();
+  let deletedInvoice = await Model.findOne({ where: { id: req.params.id, removed: false } });
+  if (deletedInvoice) {
+    deletedInvoice.removed = true;
+    deletedInvoice = await Model.save(deletedInvoice);
+  }
 
   if (!deletedInvoice) {
     return res.status(404).json({
@@ -23,10 +16,7 @@ const remove = async (req, res) => {
       message: 'Invoice not found',
     });
   }
-  const paymentsInvoices = await ModelPayment.updateMany(
-    { invoice: deletedInvoice._id },
-    { $set: { removed: true } }
-  );
+  await ModelPayment.update({ invoice: deletedInvoice.id }, { removed: true });
   return res.status(200).json({
     success: true,
     result: deletedInvoice,

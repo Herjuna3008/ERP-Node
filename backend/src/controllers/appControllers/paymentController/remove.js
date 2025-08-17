@@ -1,13 +1,11 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Payment');
-const Invoice = mongoose.model('Invoice');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Payment');
+const Invoice = AppDataSource.getRepository('Invoice');
 
 const remove = async (req, res) => {
   // Find document by id and updates with the required fields
   const previousPayment = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
+    where: { id: req.params.id, removed: false },
   });
 
   if (!previousPayment) {
@@ -18,21 +16,18 @@ const remove = async (req, res) => {
     });
   }
 
-  const { _id: paymentId, amount: previousAmount } = previousPayment;
-  const { id: invoiceId, total, discount, credit: previousCredit } = previousPayment.invoice;
+  const { id: paymentId, amount: previousAmount } = previousPayment;
+  const invoice = await Invoice.findOne({ where: { id: previousPayment.invoice } });
+  const { id: invoiceId, total, discount, credit: previousCredit } = invoice;
 
   // Find the document by id and delete it
   let updates = {
     removed: true,
   };
   // Find the document by id and delete it
-  const result = await Model.findOneAndUpdate(
-    { _id: req.params.id, removed: false },
-    { $set: updates },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  let entity = await Model.findOne({ where: { id: req.params.id, removed: false } });
+  Object.assign(entity, updates);
+  const result = await Model.save(entity);
   // If no results found, return document not found
 
   let paymentStatus =
@@ -42,21 +37,10 @@ const remove = async (req, res) => {
       ? 'partially'
       : 'unpaid';
 
-  const updateInvoice = await Invoice.findOneAndUpdate(
-    { _id: invoiceId },
-    {
-      $pull: {
-        payment: paymentId,
-      },
-      $inc: { credit: -previousAmount },
-      $set: {
-        paymentStatus: paymentStatus,
-      },
-    },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  invoice.payment = (invoice.payment || []).filter((p) => p !== paymentId);
+  invoice.credit = previousCredit - previousAmount;
+  invoice.paymentStatus = paymentStatus;
+  await Invoice.save(invoice);
 
   return res.status(200).json({
     success: true,
