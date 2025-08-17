@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
 const moment = require('moment');
-
-const Model = mongoose.model('Quote');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Quote');
 const { loadSettings } = require('@/middlewares/settings');
 
 const summary = async (req, res) => {
@@ -28,80 +27,23 @@ const summary = async (req, res) => {
   let endDate = currentDate.clone().endOf(defaultType);
 
   const statuses = ['draft', 'pending', 'sent', 'expired', 'declined', 'accepted'];
-
-  const result = await Model.aggregate([
-    {
-      $match: {
-        removed: false,
-
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-      },
-    },
-    {
-      $group: {
-        _id: '$status',
-        count: {
-          $sum: 1,
-        },
-        total_amount: {
-          $sum: '$total',
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total_count: {
-          $sum: '$count',
-        },
-        results: {
-          $push: '$$ROOT',
-        },
-      },
-    },
-    {
-      $unwind: '$results',
-    },
-    {
-      $project: {
-        _id: 0,
-        status: '$results._id',
-        count: '$results.count',
-        percentage: {
-          $round: [{ $multiply: [{ $divide: ['$results.count', '$total_count'] }, 100] }, 0],
-        },
-        total_amount: '$results.total_amount',
-      },
-    },
-    {
-      $sort: {
-        status: 1,
-      },
-    },
-  ]);
-
-  statuses.forEach((status) => {
-    const found = result.find((item) => item.status === status);
-    if (!found) {
-      result.push({
-        status,
-        count: 0,
-        percentage: 0,
-        total_amount: 0,
-      });
+  const quotes = await Model.find({ where: { removed: false } });
+  const total_count = quotes.length;
+  const totalsByStatus = {};
+  statuses.forEach((s) => (totalsByStatus[s] = { count: 0, total_amount: 0 }));
+  quotes.forEach((q) => {
+    if (totalsByStatus[q.status]) {
+      totalsByStatus[q.status].count += 1;
+      totalsByStatus[q.status].total_amount += q.total;
     }
   });
-
-  const total = result.reduce((acc, item) => acc + item.total_amount, 0);
-
-  const finalResult = {
-    total,
-    type: defaultType,
-    performance: result,
-  };
+  const result = statuses.map((status) => {
+    const { count, total_amount } = totalsByStatus[status];
+    const percentage = total_count ? Math.round((count / total_count) * 100) : 0;
+    return { status, count, percentage, total_amount };
+  });
+  const total = quotes.reduce((acc, item) => acc + item.total, 0);
+  const finalResult = { total, type: defaultType, performance: result };
 
   return res.status(200).json({
     success: true,

@@ -1,29 +1,28 @@
-const summary = async (Model, req, res) => {
-  //  Query the database for a list of all results
-  const countPromise = Model.countDocuments({
-    removed: false,
-  });
-
-  const resultsPromise = await Model.countDocuments({
-    removed: false,
-  })
-    .where(req.query.filter)
-    .equals(req.query.equal)
-    .exec();
-  // Resolving both promises
-  const [countFilter, countAllDocs] = await Promise.all([resultsPromise, countPromise]);
-
-  if (countAllDocs.length > 0) {
-    return res.status(200).json({
-      success: true,
-      result: { countFilter, countAllDocs },
-      message: 'Successfully count all documents',
+const summary = async (repository, req, res) => {
+  try {
+    const countAllDocs = await repository.count({ where: { removed: false } });
+    const countFilter = await repository.count({
+      where: { removed: false, [req.query.filter]: req.query.equal },
     });
-  } else {
-    return res.status(203).json({
+
+    if (countAllDocs > 0) {
+      return res.status(200).json({
+        success: true,
+        result: { countFilter, countAllDocs },
+        message: 'Successfully count all documents',
+      });
+    } else {
+      return res.status(203).json({
+        success: false,
+        result: [],
+        message: 'Collection is Empty',
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
       success: false,
-      result: [],
-      message: 'Collection is Empty',
+      result: null,
+      message: error.message,
     });
   }
 };

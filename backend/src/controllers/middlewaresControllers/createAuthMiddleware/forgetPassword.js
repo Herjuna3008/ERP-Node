@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const checkAndCorrectURL = require('./checkAndCorrectURL');
 const sendMail = require('./sendMail');
@@ -10,8 +10,8 @@ const { loadSettings } = require('@/middlewares/settings');
 const { useAppSettings } = require('@/settings');
 
 const forgetPassword = async (req, res, { userModel }) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
-  const User = mongoose.model(userModel);
+  const UserPasswordRepo = AppDataSource.getRepository(userModel + 'Password');
+  const UserRepo = AppDataSource.getRepository(userModel);
   const { email } = req.body;
 
   // validate
@@ -32,8 +32,8 @@ const forgetPassword = async (req, res, { userModel }) => {
     });
   }
 
-  const user = await User.findOne({ email: email, removed: false });
-  const databasePassword = await UserPassword.findOne({ user: user._id, removed: false });
+  const user = await UserRepo.findOne({ where: { email: email, removed: false } });
+  const databasePassword = await UserPasswordRepo.findOne({ where: { user: { id: user.id }, removed: false } });
 
   // console.log(user);
   if (!user)
@@ -44,13 +44,8 @@ const forgetPassword = async (req, res, { userModel }) => {
     });
 
   const resetToken = shortid.generate();
-  await UserPassword.findOneAndUpdate(
-    { user: user._id },
-    { resetToken },
-    {
-      new: true,
-    }
-  ).exec();
+  databasePassword.resetToken = resetToken;
+  await UserPasswordRepo.save(databasePassword);
 
   const settings = useAppSettings();
   const idurar_app_email = settings['idurar_app_email'];
@@ -58,7 +53,7 @@ const forgetPassword = async (req, res, { userModel }) => {
 
   const url = checkAndCorrectURL(idurar_base_url);
 
-  const link = url + '/resetpassword/' + user._id + '/' + resetToken;
+  const link = url + '/resetpassword/' + user.id + '/' + resetToken;
 
   await sendMail({
     email,

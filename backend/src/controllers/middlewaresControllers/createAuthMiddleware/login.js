@@ -1,12 +1,11 @@
 const Joi = require('joi');
 
-const mongoose = require('mongoose');
-
 const authUser = require('./authUser');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const login = async (req, res, { userModel }) => {
-  const UserPasswordModel = mongoose.model(userModel + 'Password');
-  const UserModel = mongoose.model(userModel);
+  const UserPasswordRepository = AppDataSource.getRepository(userModel + 'Password');
+  const UserRepository = AppDataSource.getRepository(userModel);
   const { email, password } = req.body;
 
   // validate
@@ -28,7 +27,7 @@ const login = async (req, res, { userModel }) => {
     });
   }
 
-  const user = await UserModel.findOne({ email: email, removed: false });
+  const user = await UserRepository.findOne({ where: { email: email, removed: false } });
 
   console.log(user);
   if (!user)
@@ -38,7 +37,7 @@ const login = async (req, res, { userModel }) => {
       message: 'No account with this email has been registered.',
     });
 
-  const databasePassword = await UserPasswordModel.findOne({ user: user._id, removed: false });
+  const databasePassword = await UserPasswordRepository.findOne({ where: { user: { id: user.id }, removed: false } });
 
   if (!user.enabled)
     return res.status(409).json({
@@ -52,7 +51,7 @@ const login = async (req, res, { userModel }) => {
     user,
     databasePassword,
     password,
-    UserPasswordModel,
+    UserPasswordRepository,
   });
 };
 

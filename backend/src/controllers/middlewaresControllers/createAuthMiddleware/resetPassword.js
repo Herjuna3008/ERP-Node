@@ -1,17 +1,16 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Joi = require('joi');
-const mongoose = require('mongoose');
-
 const shortid = require('shortid');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const resetPassword = async (req, res, { userModel }) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
-  const User = mongoose.model(userModel);
+  const UserPasswordRepo = AppDataSource.getRepository(userModel + 'Password');
+  const UserRepo = AppDataSource.getRepository(userModel);
   const { password, userId, resetToken } = req.body;
 
-  const databasePassword = await UserPassword.findOne({ user: userId, removed: false });
-  const user = await User.findOne({ _id: userId, removed: false }).exec();
+  const databasePassword = await UserPasswordRepo.findOne({ where: { user: { id: userId }, removed: false } });
+  const user = await UserRepo.findOne({ where: { id: userId, removed: false } });
 
   if (!user.enabled)
     return res.status(409).json({
@@ -65,20 +64,14 @@ const resetPassword = async (req, res, { userModel }) => {
     { expiresIn: '24h' }
   );
 
-  await UserPassword.findOneAndUpdate(
-    { user: userId },
-    {
-      $push: { loggedSessions: token },
-      password: hashedPassword,
-      salt: salt,
-      emailToken: emailToken,
-      resetToken: shortid.generate(),
-      emailVerified: true,
-    },
-    {
-      new: true,
-    }
-  ).exec();
+  databasePassword.loggedSessions = databasePassword.loggedSessions || [];
+  databasePassword.loggedSessions.push(token);
+  databasePassword.password = hashedPassword;
+  databasePassword.salt = salt;
+  databasePassword.emailToken = emailToken;
+  databasePassword.resetToken = shortid.generate();
+  databasePassword.emailVerified = true;
+  await UserPasswordRepo.save(databasePassword);
 
   if (
     resetToken === databasePassword.resetToken &&
@@ -97,7 +90,7 @@ const resetPassword = async (req, res, { userModel }) => {
     return res.status(200).json({
       success: true,
       result: {
-        _id: user._id,
+        _id: user.id,
         name: user.name,
         surname: user.surname,
         role: user.role,

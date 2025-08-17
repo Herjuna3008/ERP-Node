@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
 const moment = require('moment');
-
-const Model = mongoose.model('Invoice');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Invoice');
 
 const { loadSettings } = require('@/middlewares/settings');
 
@@ -29,174 +28,29 @@ const summary = async (req, res) => {
   let endDate = currentDate.clone().endOf(defaultType);
 
   const statuses = ['draft', 'pending', 'overdue', 'paid', 'unpaid', 'partially'];
+  const invoices = await Model.find({ where: { removed: false } });
+  const totalInvoices = { total: invoices.reduce((acc, i) => acc + i.total, 0), count: invoices.length };
 
-  const response = await Model.aggregate([
-    {
-      $match: {
-        removed: false,
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-      },
-    },
-    {
-      $facet: {
-        totalInvoice: [
-          {
-            $group: {
-              _id: null,
-              total: {
-                $sum: '$total',
-              },
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              total: '$total',
-              count: '$count',
-            },
-          },
-        ],
-        statusCounts: [
-          {
-            $group: {
-              _id: '$status',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              status: '$_id',
-              count: '$count',
-            },
-          },
-        ],
-        paymentStatusCounts: [
-          {
-            $group: {
-              _id: '$paymentStatus',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              status: '$_id',
-              count: '$count',
-            },
-          },
-        ],
-        overdueCounts: [
-          {
-            $match: {
-              expiredDate: {
-                $lt: new Date(),
-              },
-            },
-          },
-          {
-            $group: {
-              _id: '$status',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              status: '$_id',
-              count: '$count',
-            },
-          },
-        ],
-      },
-    },
-  ]);
-
-  let result = [];
-
-  const totalInvoices = response[0].totalInvoice ? response[0].totalInvoice[0] : 0;
-  const statusResult = response[0].statusCounts || [];
-  const paymentStatusResult = response[0].paymentStatusCounts || [];
-  const overdueResult = response[0].overdueCounts || [];
-
-  const statusResultMap = statusResult.map((item) => {
-    return {
-      ...item,
-      percentage: Math.round((item.count / totalInvoices.count) * 100),
-    };
-  });
-
-  const paymentStatusResultMap = paymentStatusResult.map((item) => {
-    return {
-      ...item,
-      percentage: Math.round((item.count / totalInvoices.count) * 100),
-    };
-  });
-
-  const overdueResultMap = overdueResult.map((item) => {
-    return {
-      ...item,
-      status: 'overdue',
-      percentage: Math.round((item.count / totalInvoices.count) * 100),
-    };
-  });
-
-  statuses.forEach((status) => {
-    const found = [...paymentStatusResultMap, ...statusResultMap, ...overdueResultMap].find(
-      (item) => item.status === status
-    );
-    if (found) {
-      result.push(found);
+  const result = statuses.map((status) => {
+    let count = 0;
+    if (status === 'overdue') {
+      count = invoices.filter((i) => i.expiredDate && i.expiredDate < new Date()).length;
+    } else if (['paid', 'unpaid', 'partially'].includes(status)) {
+      count = invoices.filter((i) => i.paymentStatus === status).length;
+    } else {
+      count = invoices.filter((i) => i.status === status).length;
     }
+    const percentage = totalInvoices.count ? Math.round((count / totalInvoices.count) * 100) : 0;
+    return { status, count, percentage };
   });
 
-  const unpaid = await Model.aggregate([
-    {
-      $match: {
-        removed: false,
-
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-        paymentStatus: {
-          $in: ['unpaid', 'partially'],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total_amount: {
-          $sum: {
-            $subtract: ['$total', '$credit'],
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        total_amount: '$total_amount',
-      },
-    },
-  ]);
+  const unpaid = invoices
+    .filter((i) => ['unpaid', 'partially'].includes(i.paymentStatus))
+    .reduce((acc, i) => acc + (i.total - i.credit), 0);
 
   const finalResult = {
-    total: totalInvoices?.total,
-    total_undue: unpaid.length > 0 ? unpaid[0].total_amount : 0,
+    total: totalInvoices.total,
+    total_undue: unpaid,
     type,
     performance: result,
   };

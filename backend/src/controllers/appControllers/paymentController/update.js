@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Payment');
-const Invoice = mongoose.model('Invoice');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Payment');
+const Invoice = AppDataSource.getRepository('Invoice');
 const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
@@ -15,13 +14,11 @@ const update = async (req, res) => {
     });
   }
   // Find document by id and updates with the required fields
-  const previousPayment = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  });
+  const previousPayment = await Model.findOne({ where: { id: req.params.id, removed: false } });
+  const invoiceRecord = await Invoice.findOne({ where: { id: previousPayment.invoice } });
 
   const { amount: previousAmount } = previousPayment;
-  const { id: invoiceId, total, discount, credit: previousCredit } = previousPayment.invoice;
+  const { id: invoiceId, total, discount, credit: previousCredit } = invoiceRecord;
 
   const { amount: currentAmount } = req.body;
 
@@ -55,26 +52,12 @@ const update = async (req, res) => {
     updated: updatedDate,
   };
 
-  const result = await Model.findOneAndUpdate(
-    { _id: req.params.id, removed: false },
-    { $set: updates },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  Model.merge(previousPayment, updates);
+  const result = await Model.save(previousPayment);
 
-  const updateInvoice = await Invoice.findOneAndUpdate(
-    { _id: result.invoice._id.toString() },
-    {
-      $inc: { credit: changedAmount },
-      $set: {
-        paymentStatus: paymentStatus,
-      },
-    },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  invoiceRecord.credit = previousCredit + changedAmount;
+  invoiceRecord.paymentStatus = paymentStatus;
+  await Invoice.save(invoiceRecord);
 
   return res.status(200).json({
     success: true,

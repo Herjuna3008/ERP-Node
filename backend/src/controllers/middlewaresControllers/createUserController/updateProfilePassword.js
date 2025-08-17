@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const { generate: uniqueId } = require('shortid');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const updateProfilePassword = async (userModel, req, res) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
+  const UserPassword = AppDataSource.getRepository(userModel + 'Password');
 
   const reqUserName = userModel.toLowerCase();
   const userProfile = req[reqUserName];
@@ -39,13 +39,12 @@ const updateProfilePassword = async (userModel, req, res) => {
       message: "you couldn't update demo password",
     });
   }
-  const resultPassword = await UserPassword.findOneAndUpdate(
-    { user: userProfile._id, removed: false },
-    { $set: UserPasswordData },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
+  let resultPassword = await UserPassword.findOne({ where: { user: { id: userProfile.id }, removed: false } });
+  if (resultPassword) {
+    resultPassword.password = passwordHash;
+    resultPassword.salt = salt;
+    resultPassword = await UserPassword.save(resultPassword);
+  }
 
   if (!resultPassword) {
     return res.status(403).json({
@@ -58,7 +57,7 @@ const updateProfilePassword = async (userModel, req, res) => {
   return res.status(200).json({
     success: true,
     result: {},
-    message: 'we update the password by this id: ' + userProfile._id,
+    message: 'we update the password by this id: ' + userProfile.id,
   });
 };
 

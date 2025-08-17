@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+const { AppDataSource } = require('@/typeorm-data-source');
 
 const updateProfile = async (userModel, req, res) => {
-  const User = mongoose.model(userModel);
+  const User = AppDataSource.getRepository(userModel);
 
   const reqUserName = userModel.toLowerCase();
   const userProfile = req[reqUserName];
@@ -27,14 +27,7 @@ const updateProfile = async (userModel, req, res) => {
         surname: req.body.surname,
       };
   // Find document by id and updates with the required fields
-  const result = await User.findOneAndUpdate(
-    { _id: userProfile._id, removed: false },
-    { $set: updates },
-    {
-      new: true, // return the new result instead of the old one
-    }
-  ).exec();
-
+  let result = await User.findOne({ where: { id: userProfile.id, removed: false } });
   if (!result) {
     return res.status(404).json({
       success: false,
@@ -42,10 +35,12 @@ const updateProfile = async (userModel, req, res) => {
       message: 'No profile found by this id: ' + userProfile._id,
     });
   }
+  User.merge(result, updates);
+  result = await User.save(result);
   return res.status(200).json({
     success: true,
     result: {
-      _id: result?._id,
+      _id: result?.id,
       enabled: result?.enabled,
       email: result?.email,
       name: result?.name,
@@ -53,7 +48,7 @@ const updateProfile = async (userModel, req, res) => {
       photo: result?.photo,
       role: result?.role,
     },
-    message: 'we update this profile by this id: ' + userProfile._id,
+    message: 'we update this profile by this id: ' + userProfile.id,
   });
 };
 

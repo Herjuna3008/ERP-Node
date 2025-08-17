@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Invoice');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Invoice');
 
 const custom = require('@/controllers/pdfController');
 
@@ -20,10 +19,7 @@ const update = async (req, res) => {
     });
   }
 
-  const previousInvoice = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  });
+  const previousInvoice = await Model.findOne({ where: { id: req.params.id, removed: false } });
 
   const { credit } = previousInvoice;
 
@@ -67,9 +63,8 @@ const update = async (req, res) => {
     calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
   body['paymentStatus'] = paymentStatus;
 
-  const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
-    new: true, // return the new result instead of the old one
-  }).exec();
+  Model.merge(previousInvoice, body);
+  const result = await Model.save(previousInvoice);
 
   // Returning successfull response
 

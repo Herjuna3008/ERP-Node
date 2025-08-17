@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
-
-const Model = mongoose.model('Setting');
+const { AppDataSource } = require('@/typeorm-data-source');
+const Model = AppDataSource.getRepository('Setting');
 
 const updateBySettingKey = async (req, res) => {
   const settingKey = req.params.settingKey || undefined;
@@ -21,16 +20,11 @@ const updateBySettingKey = async (req, res) => {
       message: 'No settingValue provided ',
     });
   }
-  const result = await Model.findOneAndUpdate(
-    { settingKey },
-    {
-      settingValue,
-    },
-    {
-      new: true, // return the new result instead of the old one
-      runValidators: true,
-    }
-  ).exec();
+  let result = await Model.findOne({ where: { settingKey } });
+  if (result) {
+    result.settingValue = settingValue;
+    result = await Model.save(result);
+  }
   if (!result) {
     return res.status(404).json({
       success: false,

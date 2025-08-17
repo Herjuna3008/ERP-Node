@@ -1,61 +1,52 @@
-const paginatedList = async (Model, req, res) => {
-  const page = req.query.page || 1;
+const paginatedList = async (repository, req, res) => {
+  const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.items) || 10;
   const skip = page * limit - limit;
 
   const { sortBy = 'enabled', sortValue = -1, filter, equal } = req.query;
-
   const fieldsArray = req.query.fields ? req.query.fields.split(',') : [];
 
-  let fields;
+  try {
+    const qb = repository
+      .createQueryBuilder('model')
+      .where('model.removed = :removed', { removed: false });
 
-  fields = fieldsArray.length === 0 ? {} : { $or: [] };
+    if (filter && equal !== undefined) {
+      qb.andWhere(`model.${filter} = :equal`, { equal });
+    }
 
-  for (const field of fieldsArray) {
-    fields.$or.push({ [field]: { $regex: new RegExp(req.query.q, 'i') } });
-  }
+    if (fieldsArray.length && req.query.q) {
+      const where = fieldsArray.map((f) => `model.${f} LIKE :q`).join(' OR ');
+      qb.andWhere(`(${where})`, { q: `%${req.query.q}%` });
+    }
 
-  //  Query the database for a list of all results
-  const resultsPromise = Model.find({
-    removed: false,
+    qb.orderBy(`model.${sortBy}`, sortValue == -1 ? 'DESC' : 'ASC');
+    qb.skip(skip).take(limit);
 
-    [filter]: equal,
-    ...fields,
-  })
-    .skip(skip)
-    .limit(limit)
-    .sort({ [sortBy]: sortValue })
-    .populate()
-    .exec();
+    const [result, count] = await qb.getManyAndCount();
+    const pages = Math.ceil(count / limit);
+    const pagination = { page, pages, count };
 
-  // Counting the total documents
-  const countPromise = Model.countDocuments({
-    removed: false,
-
-    [filter]: equal,
-    ...fields,
-  });
-  // Resolving both promises
-  const [result, count] = await Promise.all([resultsPromise, countPromise]);
-
-  // Calculating total pages
-  const pages = Math.ceil(count / limit);
-
-  // Getting Pagination Object
-  const pagination = { page, pages, count };
-  if (count > 0) {
-    return res.status(200).json({
-      success: true,
-      result,
-      pagination,
-      message: 'Successfully found all documents',
-    });
-  } else {
-    return res.status(203).json({
-      success: true,
-      result: [],
-      pagination,
-      message: 'Collection is Empty',
+    if (count > 0) {
+      return res.status(200).json({
+        success: true,
+        result,
+        pagination,
+        message: 'Successfully found all documents',
+      });
+    } else {
+      return res.status(203).json({
+        success: true,
+        result: [],
+        pagination,
+        message: 'Collection is Empty',
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      result: null,
+      message: error.message,
     });
   }
 };
