@@ -5,7 +5,9 @@ const paginatedList = async (req, res) => {
   const page = req.query.page || 1;
   const limit = parseInt(req.query.items) || 10;
   const skip = page * limit - limit;
-  const { sortBy = 'enabled', sortValue = -1, filter, equal } = req.query;
+  const { sortBy = 'id', sortValue = -1, filter, equal } = req.query;
+  const columns = Model.metadata.columns.map((c) => c.propertyName);
+  const orderBy = columns.includes(sortBy) ? sortBy : 'id';
 
   const where = { removed: false };
   if (filter && equal !== undefined) {
@@ -16,7 +18,7 @@ const paginatedList = async (req, res) => {
     where,
     skip,
     take: limit,
-    order: { [sortBy]: sortValue === -1 ? 'DESC' : 'ASC' },
+    order: { [orderBy]: sortValue === -1 ? 'DESC' : 'ASC' },
   });
   // Calculating total pages
   const pages = Math.ceil(count / limit);
