@@ -1,5 +1,7 @@
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
-const methods = createCRUDController('Quote');
+const { AppDataSource } = require('@/typeorm-data-source');
+const repository = AppDataSource.getRepository('Quote');
+const methods = createCRUDController(repository);
 
 const sendMail = require('./sendMail');
 const create = require('./create');

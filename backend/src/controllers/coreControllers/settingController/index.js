@@ -1,5 +1,7 @@
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
-const crudController = createCRUDController('Setting');
+const { AppDataSource } = require('@/typeorm-data-source');
+const repository = AppDataSource.getRepository('Setting');
+const crudController = createCRUDController(repository);
 
 const listBySettingKey = require('./listBySettingKey');
 const readBySettingKey = require('./readBySettingKey');

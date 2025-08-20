@@ -1,5 +1,7 @@
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
-const methods = createCRUDController('Payment');
+const { AppDataSource } = require('@/typeorm-data-source');
+const repository = AppDataSource.getRepository('Payment');
+const methods = createCRUDController(repository);
 
 const create = require('./create');
 const summary = require('./summary');
