@@ -61,6 +61,12 @@ methods.delete = async (req, res) => {
     success: true,
     result: addId(tax),
     message: 'Tax deleted successfully',
+  )};
+                              
+  return res.status(403).json({
+    success: false,
+    result: null,
+    message: "you can't delete tax after it has been created, contact developer to delete tax",
   });
 };
 
