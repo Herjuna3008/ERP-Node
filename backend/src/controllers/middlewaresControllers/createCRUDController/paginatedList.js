@@ -3,7 +3,9 @@ const paginatedList = async (repository, req, res) => {
   const limit = parseInt(req.query.items) || 10;
   const skip = page * limit - limit;
 
-  const { sortBy = 'enabled', sortValue = -1, filter, equal } = req.query;
+  const { sortBy = 'id', sortValue = -1, filter, equal } = req.query;
+  const columns = repository.metadata.columns.map((c) => c.propertyName);
+  const orderBy = columns.includes(sortBy) ? sortBy : 'id';
   const fieldsArray = req.query.fields ? req.query.fields.split(',') : [];
 
   try {
@@ -20,7 +22,7 @@ const paginatedList = async (repository, req, res) => {
       qb.andWhere(`(${where})`, { q: `%${req.query.q}%` });
     }
 
-    qb.orderBy(`model.${sortBy}`, sortValue == -1 ? 'DESC' : 'ASC');
+    qb.orderBy(`model.${orderBy}`, sortValue == -1 ? 'DESC' : 'ASC');
     qb.skip(skip).take(limit);
 
     const [result, count] = await qb.getManyAndCount();
