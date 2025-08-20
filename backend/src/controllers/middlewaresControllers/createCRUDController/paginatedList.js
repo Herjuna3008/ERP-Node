@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const paginatedList = async (repository, req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.items) || 10;
@@ -32,7 +34,7 @@ const paginatedList = async (repository, req, res) => {
     if (count > 0) {
       return res.status(200).json({
         success: true,
-        result,
+        result: addId(result),
         pagination,
         message: 'Successfully found all documents',
       });

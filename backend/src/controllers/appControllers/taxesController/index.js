@@ -1,5 +1,6 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const repository = AppDataSource.getRepository('Taxes');
 const methods = createCRUDController(repository);
@@ -18,21 +19,53 @@ methods.create = async (req, res) => {
   const result = await repository.save(tax);
   return res.status(200).json({
     success: true,
-    result,
+    result: addId(result),
     message: 'Tax created successfully',
   });
 };
 
 methods.delete = async (req, res) => {
-  return res.status(403).json({
-    success: false,
-    result: null,
-    message: "you can't delete tax after it has been created",
+  const id = parseInt(req.params.id, 10);
+  const tax = await repository.findOne({ where: { id, removed: false } });
+  if (!tax) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Tax not found',
+    });
+  }
+
+  const count = await repository.count({ where: { removed: false } });
+  if (count <= 1) {
+    return res.status(422).json({
+      success: false,
+      result: null,
+      message: 'You cannot delete the tax because it is the only existing one',
+    });
+  }
+
+  tax.removed = true;
+  await repository.save(tax);
+
+  if (tax.isDefault) {
+    await repository
+      .createQueryBuilder()
+      .update()
+      .set({ isDefault: true })
+      .where('id != :id AND removed = false', { id })
+      .limit(1)
+      .execute();
+  }
+
+  return res.status(200).json({
+    success: true,
+    result: addId(tax),
+    message: 'Tax deleted successfully',
   });
 };
 
 methods.update = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = parseInt(req.params.id, 10);
   const tax = await repository.findOne({ where: { id, removed: false } });
   if (!tax) {
     return res.status(404).json({
@@ -74,7 +107,7 @@ methods.update = async (req, res) => {
   return res.status(200).json({
     success: true,
     message: 'Tax updated successfully',
-    result,
+    result: addId(result),
   });
 };
 

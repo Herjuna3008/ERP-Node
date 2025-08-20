@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const remove = async (repository, req, res) => {
   try {
     let entity = await repository.findOne({ where: { id: req.params.id } });
@@ -12,7 +14,7 @@ const remove = async (repository, req, res) => {
     const result = await repository.save(entity);
     return res.status(200).json({
       success: true,
-      result,
+      result: addId(result),
       message: 'Successfully Deleted the document ',
     });
   } catch (error) {

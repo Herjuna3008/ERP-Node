@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const listAll = async (repository, req, res) => {
   const sort = req.query.sort || 'desc';
   const enabled = req.query.enabled;
@@ -13,7 +15,7 @@ const listAll = async (repository, req, res) => {
     if (result.length > 0) {
       return res.status(200).json({
         success: true,
-        result,
+        result: addId(result),
         message: 'Successfully found all documents',
       });
     } else {

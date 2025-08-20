@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const update = async (repository, req, res) => {
   try {
     req.body.removed = false;
@@ -15,7 +17,7 @@ const update = async (repository, req, res) => {
     const result = await repository.save(entity);
     return res.status(200).json({
       success: true,
-      result,
+      result: addId(result),
       message: 'we update this document ',
     });
   } catch (error) {
