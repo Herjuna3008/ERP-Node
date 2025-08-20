@@ -32,27 +32,17 @@ methods.delete = async (req, res) => {
 };
 
 methods.update = async (req, res) => {
-  const { id } = req.params;
+  const id = Number(req.params.id);
   const tax = await repository.findOne({ where: { id, removed: false } });
+  if (!tax) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Tax not found',
+    });
+  }
+
   const { isDefault = tax.isDefault, enabled = tax.enabled } = req.body;
-
-  if (!isDefault || (!enabled && isDefault)) {
-    await repository
-      .createQueryBuilder()
-      .update()
-      .set({ isDefault: true })
-      .where('id != :id AND enabled = true', { id })
-      .execute();
-  }
-
-  if (isDefault && enabled) {
-    await repository
-      .createQueryBuilder()
-      .update()
-      .set({ isDefault: false })
-      .where('id != :id', { id })
-      .execute();
-  }
 
   const taxesCount = await repository.count();
   if ((!enabled || !isDefault) && taxesCount <= 1) {
@@ -63,8 +53,24 @@ methods.update = async (req, res) => {
     });
   }
 
-  await repository.update(id, req.body);
-  const result = await repository.findOne({ where: { id } });
+  if (tax.isDefault && (!isDefault || !enabled)) {
+    await repository
+      .createQueryBuilder()
+      .update()
+      .set({ isDefault: true })
+      .where('id != :id AND enabled = true', { id })
+      .execute();
+  } else if (isDefault) {
+    await repository
+      .createQueryBuilder()
+      .update()
+      .set({ isDefault: false })
+      .where('id != :id', { id })
+      .execute();
+  }
+
+  const merged = repository.merge(tax, { ...req.body, isDefault, enabled });
+  const result = await repository.save(merged);
   return res.status(200).json({
     success: true,
     message: 'Tax updated successfully',
