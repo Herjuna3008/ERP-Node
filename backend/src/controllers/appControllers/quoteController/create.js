@@ -4,6 +4,7 @@ const Model = AppDataSource.getRepository('Quote');
 const custom = require('@/controllers/pdfController');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const { calculate } = require('@/helpers');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const create = async (req, res) => {
   const { items = [], taxRate = 0, discount = 0 } = req.body;
@@ -37,16 +38,16 @@ const create = async (req, res) => {
   const fileId = 'quote-' + result.id + '.pdf';
   result.pdf = fileId;
   const updateResult = await Model.save(result);
-  // Returning successfull response
+  // Returning successful response
 
   increaseBySettingKey({
     settingKey: 'last_quote_number',
   });
 
-  // Returning successfull response
+  // Returning successful response
   return res.status(200).json({
     success: true,
-    result: updateResult,
+    result: addId(updateResult),
     message: 'Quote created successfully',
   });
 };

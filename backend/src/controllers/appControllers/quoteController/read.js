@@ -1,5 +1,6 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Quote');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const read = async (req, res) => {
   // Find document by id
@@ -12,10 +13,10 @@ const read = async (req, res) => {
       message: 'No document found ',
     });
   } else {
-    // Return success resposne
+    // Return success response
     return res.status(200).json({
       success: true,
-      result,
+      result: addId(result),
       message: 'we found this document ',
     });
   }

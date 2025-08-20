@@ -1,5 +1,6 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Quote');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const paginatedList = async (req, res) => {
   const page = req.query.page || 1;
@@ -28,7 +29,7 @@ const paginatedList = async (req, res) => {
   if (count > 0) {
     return res.status(200).json({
       success: true,
-      result,
+      result: addId(result),
       pagination,
       message: 'Successfully found all documents',
     });

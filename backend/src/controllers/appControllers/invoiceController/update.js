@@ -4,6 +4,7 @@ const Model = AppDataSource.getRepository('Invoice');
 const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const schema = require('./schemaValidate');
 
 const update = async (req, res) => {
@@ -66,11 +67,11 @@ const update = async (req, res) => {
   Model.merge(previousInvoice, body);
   const result = await Model.save(previousInvoice);
 
-  // Returning successfull response
+  // Returning successful response
 
   return res.status(200).json({
     success: true,
-    result,
+    result: addId(result),
     message: 'we update this document ',
   });
 };
