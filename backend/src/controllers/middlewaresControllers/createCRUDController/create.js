@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const create = async (repository, req, res) => {
   try {
     req.body.removed = false;
@@ -5,7 +7,7 @@ const create = async (repository, req, res) => {
     const result = await repository.save(entity);
     return res.status(200).json({
       success: true,
-      result,
+      result: addId(result),
       message: 'Successfully Created the document in Model ',
     });
   } catch (error) {
@@ -17,4 +19,4 @@ const create = async (repository, req, res) => {
   }
 };
 
-module.exports = create;
+  module.exports = create;
