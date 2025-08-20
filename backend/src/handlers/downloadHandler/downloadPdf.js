@@ -7,7 +7,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
     let result;
     try {
       const repository = AppDataSource.getRepository(modelName);
-      result = await repository.findOne({ where: { id } });
+      result = await repository.findOne({ where: { id: Number(id) } });
     } catch (e) {
       result = null;
     }
@@ -19,7 +19,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
 
       // Continue process if result is returned
 
-      const fileId = modelName.toLowerCase() + '-' + result._id + '.pdf';
+      const fileId = modelName.toLowerCase() + '-' + result.id + '.pdf';
       const folderPath = modelName.toLowerCase();
       const targetLocation = `src/public/download/${folderPath}/${fileId}`;
       await custom.generatePdf(

@@ -3,6 +3,7 @@ const Model = AppDataSource.getRepository('Invoice');
 
 const { calculate } = require('@/helpers');
 const { increaseBySettingKey } = require('@/middlewares/settings');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -50,16 +51,16 @@ const create = async (req, res) => {
   const fileId = 'invoice-' + result.id + '.pdf';
   result.pdf = fileId;
   const updateResult = await Model.save(result);
-  // Returning successfull response
+  // Returning successful response
 
   increaseBySettingKey({
     settingKey: 'last_invoice_number',
   });
 
-  // Returning successfull response
+  // Returning successful response
   return res.status(200).json({
     success: true,
-    result: updateResult,
+    result: addId(updateResult),
     message: 'Invoice created successfully',
   });
 };

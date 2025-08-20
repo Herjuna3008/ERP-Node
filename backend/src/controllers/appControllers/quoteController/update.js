@@ -4,6 +4,7 @@ const Model = AppDataSource.getRepository('Quote');
 const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const update = async (req, res) => {
   const { items = [], taxRate = 0, discount = 0 } = req.body;
@@ -52,11 +53,11 @@ const update = async (req, res) => {
   Model.merge(result, body);
   result = await Model.save(result);
 
-  // Returning successfull response
+  // Returning successful response
 
   return res.status(200).json({
     success: true,
-    result,
+    result: addId(result),
     message: 'we update this document ',
   });
 };
