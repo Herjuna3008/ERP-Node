@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const filter = async (repository, req, res) => {
   if (req.query.filter === undefined || req.query.equal === undefined) {
     return res.status(403).json({
@@ -18,7 +20,7 @@ const filter = async (repository, req, res) => {
     } else {
       return res.status(200).json({
         success: true,
-        result,
+        result: addId(result),
         message: 'Successfully found all documents  ',
       });
     }

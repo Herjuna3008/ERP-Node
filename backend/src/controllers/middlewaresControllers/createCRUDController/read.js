@@ -1,3 +1,5 @@
+const { addId } = require('./utils');
+
 const read = async (repository, req, res) => {
   try {
     const result = await repository.findOne({
@@ -12,7 +14,7 @@ const read = async (repository, req, res) => {
     } else {
       return res.status(200).json({
         success: true,
-        result,
+        result: addId(result),
         message: 'we found this document ',
       });
     }

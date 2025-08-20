@@ -2,9 +2,8 @@ const { AppDataSource } = require('@/typeorm-data-source');
 const { Not } = require('typeorm');
 const Model = AppDataSource.getRepository('PaymentMode');
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const methods = createCRUDController(Model);
-
-delete methods['delete'];
 
 methods.create = async (req, res) => {
   const { isDefault } = req.body;
@@ -20,16 +19,48 @@ methods.create = async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    result: result,
+    result: addId(result),
     message: 'payment mode created successfully',
   });
 };
 
 methods.delete = async (req, res) => {
-  return res.status(403).json({
-    success: false,
-    result: null,
-    message: "you can't delete payment mode after it has been created",
+  const id = parseInt(req.params.id, 10);
+  const paymentMode = await Model.findOne({ where: { id, removed: false } });
+
+  if (!paymentMode) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'payment mode not found',
+    });
+  }
+
+  const count = await Model.count({ where: { removed: false } });
+  if (count <= 1) {
+    return res.status(422).json({
+      success: false,
+      result: null,
+      message: 'You cannot delete the paymentMode because it is the only existing one',
+    });
+  }
+
+  paymentMode.removed = true;
+  await Model.save(paymentMode);
+
+  if (paymentMode.isDefault) {
+    await Model.createQueryBuilder()
+      .update()
+      .set({ isDefault: true })
+      .where('id != :id AND removed = false', { id })
+      .limit(1)
+      .execute();
+  }
+
+  return res.status(200).json({
+    success: true,
+    result: addId(paymentMode),
+    message: 'paymentMode deleted successfully',
   });
 };
 
@@ -74,7 +105,7 @@ methods.update = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'paymentMode updated successfully',
-      result,
+      result: addId(result),
     });
   }
 };
