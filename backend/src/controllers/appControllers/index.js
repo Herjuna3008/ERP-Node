@@ -23,7 +23,8 @@ const appControllers = () => {
         controllers[controllerName] = customController;
       }
     } catch (err) {
-      throw new Error(err.message);
+      err.message = `${controllerName}: ${err.message}`;
+      throw err;
     }
   });
 

@@ -25,7 +25,6 @@ methods.create = async (req, res) => {
 };
 
 methods.delete = async (req, res) => {
-<<<<<<< HEAD
   const id = parseInt(req.params.id, 10);
   const tax = await repository.findOne({ where: { id, removed: false } });
   if (!tax) {
@@ -62,12 +61,12 @@ methods.delete = async (req, res) => {
     success: true,
     result: addId(tax),
     message: 'Tax deleted successfully',
-=======
+  )};
+                              
   return res.status(403).json({
     success: false,
     result: null,
     message: "you can't delete tax after it has been created, contact developer to delete tax",
->>>>>>> b1f3ca8 (update)
   });
 };
 
