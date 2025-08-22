@@ -1,6 +1,8 @@
 const { AppDataSource } = require('@/typeorm-data-source');
-const Model = AppDataSource.getRepository('Invoice');
+const Model = AppDataSource.getRepository('Payment');
 const clientRepository = AppDataSource.getRepository('Client');
+const invoiceRepository = AppDataSource.getRepository('Invoice');
+const paymentModeRepository = AppDataSource.getRepository('PaymentMode');
 const { In } = require('typeorm');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
@@ -25,30 +27,43 @@ const paginatedList = async (req, res) => {
     order: { [orderBy]: sortValue === -1 ? 'DESC' : 'ASC' },
   });
 
-  // Load client details for each invoice
   const clientIds = [...new Set(result.map((r) => r.client).filter(Boolean))];
-  const clients = clientIds.length
-    ? await clientRepository.find({ where: { id: In(clientIds) } })
-    : [];
+  const invoiceIds = [...new Set(result.map((r) => r.invoice).filter(Boolean))];
+  const paymentModeIds = [...new Set(result.map((r) => r.paymentMode).filter(Boolean))];
+
+  const [clients, invoices, paymentModes] = await Promise.all([
+    clientIds.length ? clientRepository.find({ where: { id: In(clientIds) } }) : [],
+    invoiceIds.length ? invoiceRepository.find({ where: { id: In(invoiceIds) } }) : [],
+    paymentModeIds.length ? paymentModeRepository.find({ where: { id: In(paymentModeIds) } }) : [],
+  ]);
+
   const clientMap = {};
   addId(clients).forEach((c) => {
     clientMap[c.id] = c;
   });
+  const invoiceMap = {};
+  addId(invoices).forEach((i) => {
+    invoiceMap[i.id] = i;
+  });
+  const paymentModeMap = {};
+  addId(paymentModes).forEach((p) => {
+    paymentModeMap[p.id] = p;
+  });
 
-  const invoices = result.map((invoice) => ({
-    ...invoice,
-    client: clientMap[invoice.client] || null,
+  const payments = result.map((payment) => ({
+    ...payment,
+    client: clientMap[payment.client] || null,
+    invoice: invoiceMap[payment.invoice] || null,
+    paymentMode: paymentModeMap[payment.paymentMode] || null,
   }));
 
-  // Calculating total pages
   const pages = Math.ceil(count / limit);
-
-  // Getting Pagination Object
   const pagination = { page, pages, count };
+
   if (count > 0) {
     return res.status(200).json({
       success: true,
-      result: addId(invoices),
+      result: addId(payments),
       pagination,
       message: 'Successfully found all documents',
     });

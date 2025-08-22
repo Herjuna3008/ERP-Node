@@ -18,7 +18,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
   if (quote.converted || status === 'converted') {
     return { error: 'Quote already converted' };
   }
-  const invoiceData: any = {
+  const invoiceData = {
     number: quote.number,
     year: quote.year,
     content: quote.content,
