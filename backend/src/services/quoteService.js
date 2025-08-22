@@ -1,0 +1,42 @@
+const { AppDataSource } = require('@/typeorm-data-source');
+
+const QuoteRepository = AppDataSource.getRepository('Quote');
+const InvoiceRepository = AppDataSource.getRepository('Invoice');
+
+const convertQuoteToInvoice = async (id, adminId) => {
+  const quote = await QuoteRepository.findOne({ where: { id, removed: false } });
+  if (!quote) {
+    return { error: 'Quote not found' };
+  }
+
+  const invoiceData = {
+    number: quote.number,
+    year: quote.year,
+    content: quote.content,
+    date: quote.date,
+    expiredDate: quote.expiredDate,
+    client: quote.client,
+    items: quote.items,
+    taxRate: quote.taxRate,
+    subTotal: quote.subTotal,
+    taxTotal: quote.taxTotal,
+    total: quote.total,
+    currency: quote.currency,
+    discount: quote.discount,
+    notes: quote.notes,
+    createdBy: adminId,
+    paymentStatus: 'unpaid',
+  };
+
+  const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
+
+  quote.status = 'CONVERTED';
+  if (Object.prototype.hasOwnProperty.call(quote, 'converted')) {
+    quote.converted = true;
+  }
+  await QuoteRepository.save(quote);
+
+  return { invoiceId: invoice.id };
+};
+
+module.exports = { convertQuoteToInvoice };
