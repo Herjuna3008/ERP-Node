@@ -13,6 +13,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { erp } from '@/redux/erp/actions';
 import useLanguage from '@/locale/useLanguage';
+import request from '@/request/request';
 
 import { generate as uniqueId } from 'shortid';
 
@@ -59,15 +60,25 @@ export default function ReadItem({ config, selectedItem }) {
     const controller = new AbortController();
     if (currentResult) {
       const { invoice, _id, ...others } = currentResult;
-      setCurrentErp({ ...others, ...invoice, _id });
+      setCurrentErp({ ...others, ...invoice, _id, invoiceId: invoice?.id || invoice?._id });
     }
     return () => controller.abort();
   }, [currentResult]);
 
   useEffect(() => {
-    if (currentErp?.client) {
-      setClient(currentErp.client);
-    }
+    const loadClient = async () => {
+      if (currentErp?.client) {
+        if (typeof currentErp.client === 'number') {
+          const data = await request.read({ entity: 'client', id: currentErp.client });
+          if (data.success) {
+            setClient(data.result);
+          }
+        } else {
+          setClient(currentErp.client);
+        }
+      }
+    };
+    loadClient();
   }, [currentErp]);
 
   return (
@@ -165,10 +176,10 @@ export default function ReadItem({ config, selectedItem }) {
         </Row>
       </PageHeader>
       <Divider dashed />
-      <Descriptions title={`${translate('Client')} : ${currentErp.client.name}`}>
-        <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
-        <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
-        <Descriptions.Item label={translate('Phone')}>{client.phone}</Descriptions.Item>
+      <Descriptions title={`${translate('Client')} : ${client?.name || ''}`}>
+        <Descriptions.Item label={translate('Address')}>{client?.address}</Descriptions.Item>
+        <Descriptions.Item label={translate('email')}>{client?.email}</Descriptions.Item>
+        <Descriptions.Item label={translate('Phone')}>{client?.phone}</Descriptions.Item>
       </Descriptions>
       <Divider />
       <Row>
@@ -176,7 +187,12 @@ export default function ReadItem({ config, selectedItem }) {
           <Typography.Title level={5}>{translate('Payment Information')} :</Typography.Title>
         </Col>
         <Col sm={24} md={12} style={{ textAlign: 'right' }}>
-          <Button icon={<ExportOutlined />}>{translate('Show invoice')}</Button>
+          <Button
+            icon={<ExportOutlined />}
+            onClick={() => navigate(`/invoice/read/${currentErp.invoiceId}`)}
+          >
+            {translate('Show invoice')}
+          </Button>
         </Col>
       </Row>
       <div
@@ -221,7 +237,7 @@ export default function ReadItem({ config, selectedItem }) {
           <Col className="gutter-row" span={12}>
             <p>
               {moneyFormatter({
-                amount: currentErp.total - currentErp.credit,
+                amount: Number(currentErp.total || 0) - Number(currentErp.credit || 0),
                 currency_code: currentErp.currency,
               })}
             </p>

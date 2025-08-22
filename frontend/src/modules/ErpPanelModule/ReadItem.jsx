@@ -14,6 +14,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import useLanguage from '@/locale/useLanguage';
 import { erp } from '@/redux/erp/actions';
+import request from '@/request/request';
 
 import { generate as uniqueId } from 'shortid';
 
@@ -67,7 +68,7 @@ const Item = ({ item, currentErp }) => {
   );
 };
 
-export default function ReadItem({ config, selectedItem }) {
+export default function ReadItem({ config, selectedItem, onConvert }) {
   const translate = useLanguage();
   const { entity, ENTITY_NAME } = config;
   const dispatch = useDispatch();
@@ -118,9 +119,19 @@ export default function ReadItem({ config, selectedItem }) {
   }, [currentResult]);
 
   useEffect(() => {
-    if (currentErp?.client) {
-      setClient(currentErp.client);
-    }
+    const loadClient = async () => {
+      if (currentErp?.client) {
+        if (typeof currentErp.client === 'number') {
+          const data = await request.read({ entity: 'client', id: currentErp.client });
+          if (data.success) {
+            setClient(data.result);
+          }
+        } else {
+          setClient(currentErp.client);
+        }
+      }
+    };
+    loadClient();
   }, [currentErp]);
 
   return (
@@ -173,8 +184,13 @@ export default function ReadItem({ config, selectedItem }) {
           </Button>,
           <Button
             key={`${uniqueId()}`}
+            disabled={currentErp.status?.toLowerCase() !== 'accepted'}
             onClick={() => {
-              dispatch(erp.convert({ entity, id: currentErp._id }));
+              if (onConvert) {
+                onConvert(currentErp._id);
+              } else {
+                dispatch(erp.convert({ entity, id: currentErp._id }));
+              }
             }}
             icon={<RetweetOutlined />}
             style={{ display: entity === 'quote' ? 'inline-block' : 'none' }}
@@ -235,10 +251,10 @@ export default function ReadItem({ config, selectedItem }) {
         </Row>
       </PageHeader>
       <Divider dashed />
-      <Descriptions title={`Client : ${currentErp.client.name}`}>
-        <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
-        <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
-        <Descriptions.Item label={translate('Phone')}>{client.phone}</Descriptions.Item>
+      <Descriptions title={`Client : ${client?.name || ''}`}>
+        <Descriptions.Item label={translate('Address')}>{client?.address}</Descriptions.Item>
+        <Descriptions.Item label={translate('email')}>{client?.email}</Descriptions.Item>
+        <Descriptions.Item label={translate('Phone')}>{client?.phone}</Descriptions.Item>
       </Descriptions>
       <Divider />
       <Row gutter={[12, 0]}>

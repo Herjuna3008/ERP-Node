@@ -1,6 +1,7 @@
-const { convertQuoteToInvoice } = require('@/services/quoteService');
+import { Request, Response } from 'express';
+import { convertQuoteToInvoice } from '@/services/quoteService';
 
-const convertQuoteToInvoiceController = async (req, res) => {
+const convertQuoteToInvoiceController = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   const adminId = req.admin.id;
 
@@ -16,4 +17,4 @@ const convertQuoteToInvoiceController = async (req, res) => {
   });
 };
 
-module.exports = convertQuoteToInvoiceController;
+export default convertQuoteToInvoiceController;
