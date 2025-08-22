@@ -67,7 +67,7 @@ const Item = ({ item, currentErp }) => {
   );
 };
 
-export default function ReadItem({ config, selectedItem }) {
+export default function ReadItem({ config, selectedItem, onConvert }) {
   const translate = useLanguage();
   const { entity, ENTITY_NAME } = config;
   const dispatch = useDispatch();
@@ -174,7 +174,11 @@ export default function ReadItem({ config, selectedItem }) {
           <Button
             key={`${uniqueId()}`}
             onClick={() => {
-              dispatch(erp.convert({ entity, id: currentErp._id }));
+              if (onConvert) {
+                onConvert(currentErp._id);
+              } else {
+                dispatch(erp.convert({ entity, id: currentErp._id }));
+              }
             }}
             icon={<RetweetOutlined />}
             style={{ display: entity === 'quote' ? 'inline-block' : 'none' }}
