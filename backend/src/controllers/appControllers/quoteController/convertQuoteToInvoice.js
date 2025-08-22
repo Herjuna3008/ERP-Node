@@ -5,8 +5,8 @@ const convertQuoteToInvoiceController = async (req, res) => {
   const adminId = req.admin.id;
 
   const result = await convertQuoteToInvoice(id, adminId);
-  if (result.error) {
-    return res.status(400).json({ success: false, result: null, message: result.error });
+    if (result.error) {
+    return res.status(404).json({ success: false, result: null, message: result.error });
   }
 
   return res.status(200).json({

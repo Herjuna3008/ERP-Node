@@ -9,7 +9,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
     return { error: 'Quote not found' };
   }
 
-  const status = quote.status?.toLowerCase();
+ const status = quote.status?.toLowerCase();
 
   if (status !== 'accepted') {
     return { error: 'Only accepted quotes can be converted' };
@@ -18,8 +18,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
   if (quote.converted || status === 'converted') {
     return { error: 'Quote already converted' };
   }
-
-  const invoiceData = {
+  const invoiceData: any = {
     number: quote.number,
     year: quote.year,
     content: quote.content,
@@ -38,6 +37,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
     paymentStatus: 'unpaid',
     credit: 0,
   };
+
 
   const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
 
