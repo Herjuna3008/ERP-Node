@@ -13,7 +13,7 @@ const adminAuth = require('./controllers/coreControllers/adminAuth');
 
 const errorHandlers = require('./handlers/errorHandlers');
 const erpApiRouter = require('./routes/appRoutes/appApi');
-const masterDataRoutes = require('./routes/masterDataRoutes.ts');
+const masterDataRoutes = require('./routes/masterDataRoutes.js');
 
 const fileUpload = require('express-fileupload');
 // create our Express app
