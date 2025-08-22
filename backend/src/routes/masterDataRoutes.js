@@ -28,4 +28,4 @@ router
   .patch(rbac(['owner', 'manager']), catchErrors(supplierController.update))
   .delete(rbac(['owner', 'manager']), catchErrors(supplierController.delete));
   
-module.exports = { router }; 
+module.exports = router; 
