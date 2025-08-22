@@ -9,7 +9,16 @@ export const convertQuoteToInvoice = async (id: number, adminId: number) => {
   if (!quote) {
     return { error: 'Quote not found' };
   }
+  
+  const status = quote.status?.toLowerCase();
 
+  if (status !== 'accepted') {
+    return { error: 'Only accepted quotes can be converted' };
+  }
+
+  if (quote.converted || status === 'converted') {
+    return { error: 'Quote already converted' };
+  }
   const invoiceData: any = {
     number: quote.number,
     year: quote.year,
@@ -27,6 +36,7 @@ export const convertQuoteToInvoice = async (id: number, adminId: number) => {
     notes: quote.notes,
     createdBy: adminId,
     paymentStatus: 'unpaid',
+    credit: 0,
   };
 
   const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
