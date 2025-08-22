@@ -1,5 +1,5 @@
-import express from 'express';
-import { catchErrors } from '@/handlers/errorHandlers';
+const express = require('express');
+const { catchErrors } = require('@/handlers/errorHandlers');
 const productController = require('@/controllers/masterData/productController');
 const supplierController = require('@/controllers/masterData/supplierController');
 const rbac = require('@/middlewares/rbac');
