@@ -26,7 +26,7 @@ const summary = async (req, res) => {
   let startDate = currentDate.clone().startOf(defaultType);
   let endDate = currentDate.clone().endOf(defaultType);
 
-  const statuses = ['draft', 'pending', 'sent', 'expired', 'declined', 'accepted'];
+  const statuses = ['DRAFT', 'SENT', 'CONVERTED'];
   const quotes = await Model.find({ where: { removed: false } });
   const total_count = quotes.length;
   const totalsByStatus = {};

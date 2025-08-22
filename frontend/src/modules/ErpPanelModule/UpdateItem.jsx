@@ -83,11 +83,20 @@ export default function UpdateItem({ config, UpdateForm }) {
   const onSubmit = (fieldsValue) => {
     let dataToUpdate = { ...fieldsValue };
     if (fieldsValue) {
-      if (fieldsValue.date || fieldsValue.expiredDate) {
-        dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-        dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format(
-          'YYYY-MM-DDTHH:mm:ss.SSSZ'
-        );
+      if (fieldsValue.date || fieldsValue.expiredDate || fieldsValue.dueDate) {
+        if (fieldsValue.date) {
+          dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+        }
+        if (fieldsValue.expiredDate) {
+          dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format(
+            'YYYY-MM-DDTHH:mm:ss.SSSZ'
+          );
+        }
+        if (fieldsValue.dueDate) {
+          dataToUpdate.dueDate = dayjs(fieldsValue.dueDate).format(
+            'YYYY-MM-DDTHH:mm:ss.SSSZ'
+          );
+        }
       }
       if (fieldsValue.items) {
         let newList = [];
@@ -120,6 +129,9 @@ export default function UpdateItem({ config, UpdateForm }) {
       }
       if (formData.expiredDate) {
         formData.expiredDate = dayjs(formData.expiredDate);
+      }
+      if (formData.dueDate) {
+        formData.dueDate = dayjs(formData.dueDate);
       }
       if (!formData.taxRate) {
         formData.taxRate = 0;

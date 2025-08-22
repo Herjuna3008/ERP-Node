@@ -5,9 +5,22 @@ const custom = require('@/controllers/pdfController');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const { calculate } = require('@/helpers');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
+const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
-  const { items = [], taxRate = 0, discount = 0 } = req.body;
+  let body = req.body;
+
+  const { error, value } = schema.validate(body);
+  if (error) {
+    const { details } = error;
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: details[0]?.message,
+    });
+  }
+
+  const { items = [], taxRate = 0, discount = 0 } = value;
 
   // default
   let subTotal = 0;
@@ -26,7 +39,7 @@ const create = async (req, res) => {
   taxTotal = calculate.multiply(subTotal, taxRate / 100);
   total = calculate.add(subTotal, taxTotal);
 
-  let body = req.body;
+  body = value;
 
   body['subTotal'] = subTotal;
   body['taxTotal'] = taxTotal;

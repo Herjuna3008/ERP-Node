@@ -124,15 +124,13 @@ function LoadQuoteForm({ subTotal = 0, current = null }) {
                 required: false,
               },
             ]}
-            initialValue={'draft'}
+            initialValue={'DRAFT'}
           >
             <Select
               options={[
-                { value: 'draft', label: translate('Draft') },
-                { value: 'pending', label: translate('Pending') },
-                { value: 'sent', label: translate('Sent') },
-                { value: 'accepted', label: translate('Accepted') },
-                { value: 'declined', label: translate('Declined') },
+                { value: 'DRAFT', label: translate('Draft') },
+                { value: 'SENT', label: translate('Sent') },
+                { value: 'CONVERTED', label: translate('Converted') },
               ]}
             ></Select>
           </Form.Item>
@@ -155,8 +153,8 @@ function LoadQuoteForm({ subTotal = 0, current = null }) {
         </Col>
         <Col className="gutter-row" span={6}>
           <Form.Item
-            name="expiredDate"
-            label={translate('Expire Date')}
+            name="dueDate"
+            label={translate('Due Date')}
             rules={[
               {
                 required: true,

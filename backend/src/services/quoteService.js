@@ -9,13 +9,13 @@ const convertQuoteToInvoice = async (id, adminId) => {
     return { error: 'Quote not found' };
   }
 
- const status = quote.status?.toLowerCase();
+  const status = quote.status;
 
-  if (status !== 'accepted') {
-    return { error: 'Only accepted quotes can be converted' };
+  if (status !== 'SENT') {
+    return { error: 'Only sent quotes can be converted' };
   }
 
-  if (quote.converted || status === 'converted') {
+  if (quote.converted || status === 'CONVERTED') {
     return { error: 'Quote already converted' };
   }
   const invoiceData = {
@@ -23,7 +23,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
     year: quote.year,
     content: quote.content,
     date: quote.date,
-    expiredDate: quote.expiredDate,
+    expiredDate: quote.dueDate,
     client: quote.client,
     items: quote.items,
     taxRate: quote.taxRate,
