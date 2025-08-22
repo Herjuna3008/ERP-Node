@@ -276,8 +276,8 @@ html
                 p.strong #{translate('Date')} :
                 p #{moment(model.date).format(dateFormat)}
               .col.col-9
-                p.strong #{translate('Expired Date')} :
-                p #{moment(model.expiredDate).format(dateFormat)}
+                p.strong #{translate('Due Date')} :
+                p #{moment(model.dueDate).format(dateFormat)}
               .col.col-8 
                 p.strong #{translate('Number')} :
                 p # #{model.number}/#{model.year || ""} 

@@ -15,13 +15,9 @@
     "settingCategory": "quote_settings",
     "settingKey": "quote_status",
     "settingValue": [
-      "draft",
-      "pending",
-      "sent",
-      "negotiation",
-      "accepted",
-      "declined",
-      "cancelled"
+      "DRAFT",
+      "SENT",
+      "CONVERTED"
     ],
     "valueType": "array"
   },

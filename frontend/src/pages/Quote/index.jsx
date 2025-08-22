@@ -34,8 +34,8 @@ export default function Quote() {
       },
     },
     {
-      title: translate('expired Date'),
-      dataIndex: 'expiredDate',
+      title: translate('due date'),
+      dataIndex: 'dueDate',
       render: (date) => {
         return dayjs(date).format(dateFormat);
       },
@@ -72,6 +72,10 @@ export default function Quote() {
     {
       title: translate('Status'),
       dataIndex: 'status',
+      render: (status) => {
+        const { color } = tagColor(status);
+        return <Tag color={color}>{translate(status.toLowerCase())}</Tag>;
+      },
     },
   ];
 

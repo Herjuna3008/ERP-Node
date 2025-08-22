@@ -4,6 +4,7 @@ const colors = [
   { value: 'pending', label: 'pending', color: 'magenta', icon: '⏳' },
   { value: 'cancelled', label: 'cancelled', color: 'volcano', icon: '❌' },
   { value: 'sent', label: 'sent', color: 'gold', icon: '✉️' },
+  { value: 'converted', label: 'converted', color: 'blue', icon: '🔄' },
   { value: 'refunded', label: 'refunded', color: 'purple', icon: '💰' },
   { value: 'on hold', label: 'On hold', color: 'blue', icon: '🛑' },
 
