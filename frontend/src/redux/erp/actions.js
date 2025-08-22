@@ -124,6 +124,35 @@ export const erp = {
         });
       }
     },
+  addPayment:
+    ({ invoiceId, jsonData }) =>
+    async (dispatch) => {
+      dispatch({
+        type: actionTypes.REQUEST_LOADING,
+        keyState: 'recordPayment',
+        payload: null,
+      });
+
+      let data = await request.post({ entity: `invoices/${invoiceId}/payments`, jsonData });
+
+      if (data.success === true) {
+        dispatch({
+          type: actionTypes.REQUEST_SUCCESS,
+          keyState: 'recordPayment',
+          payload: data.result.payment,
+        });
+        dispatch({
+          type: actionTypes.CURRENT_ITEM,
+          payload: data.result.invoice,
+        });
+      } else {
+        dispatch({
+          type: actionTypes.REQUEST_FAILED,
+          keyState: 'recordPayment',
+          payload: null,
+        });
+      }
+    },
   read:
     ({ entity, id }) =>
     async (dispatch) => {

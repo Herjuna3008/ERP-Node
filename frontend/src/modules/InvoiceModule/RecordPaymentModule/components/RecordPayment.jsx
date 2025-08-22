@@ -8,7 +8,7 @@ import useLanguage from '@/locale/useLanguage';
 
 import Loading from '@/components/Loading';
 
-import PaymentForm from '@/forms/PaymentForm';
+import InvoicePaymentForm from '../../PaymentForm';
 import { useNavigate } from 'react-router-dom';
 import calculate from '@/utils/calculate';
 
@@ -41,27 +41,19 @@ export default function RecordPayment({ config }) {
 
   const onSubmit = (fieldsValue) => {
     if (currentInvoice) {
-      const { _id: invoice } = currentInvoice;
-      const client = currentInvoice.client && currentInvoice.client._id;
-      fieldsValue = {
-        ...fieldsValue,
-        invoice,
-        client,
-      };
+      dispatch(
+        erp.addPayment({
+          invoiceId: currentInvoice._id,
+          jsonData: fieldsValue,
+        })
+      );
     }
-
-    dispatch(
-      erp.recordPayment({
-        entity: 'payment',
-        jsonData: fieldsValue,
-      })
-    );
   };
 
   return (
     <Loading isLoading={isLoading}>
       <Form form={form} layout="vertical" onFinish={onSubmit}>
-        <PaymentForm maxAmount={maxAmount} />
+        <InvoicePaymentForm maxAmount={maxAmount} />
         <Form.Item>
           <Button type="primary" htmlType="submit">
             {translate('Record Payment')}
