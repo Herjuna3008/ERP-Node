@@ -1,5 +1,7 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Quote');
+const clientRepository = AppDataSource.getRepository('Client');
+const { In } = require('typeorm');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const paginatedList = async (req, res) => {
@@ -21,6 +23,22 @@ const paginatedList = async (req, res) => {
     take: limit,
     order: { [orderBy]: sortValue === -1 ? 'DESC' : 'ASC' },
   });
+
+  // Load client details for each quote
+  const clientIds = [...new Set(result.map((r) => r.client).filter(Boolean))];
+  const clients = clientIds.length
+    ? await clientRepository.find({ where: { id: In(clientIds) } })
+    : [];
+  const clientMap = {};
+  addId(clients).forEach((c) => {
+    clientMap[c.id] = c;
+  });
+
+  const quotes = result.map((quote) => ({
+    ...quote,
+    client: clientMap[quote.client] || null,
+  }));
+
   // Calculating total pages
   const pages = Math.ceil(count / limit);
 
@@ -29,7 +47,7 @@ const paginatedList = async (req, res) => {
   if (count > 0) {
     return res.status(200).json({
       success: true,
-      result: addId(result),
+      result: addId(quotes),
       pagination,
       message: 'Successfully found all documents',
     });
