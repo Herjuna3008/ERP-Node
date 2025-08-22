@@ -9,7 +9,6 @@ module.exports = new EntitySchema({
     createdBy: { type: 'int' },
     number: { type: 'int' },
     client: { type: 'int' },
-    invoice: { type: 'int' },
     date: { type: 'date', default: () => 'CURRENT_TIMESTAMP' },
     amount: { type: 'float' },
     currency: { type: 'varchar', default: 'NA' },
@@ -19,5 +18,13 @@ module.exports = new EntitySchema({
     pdf: { type: 'varchar', nullable: true },
     updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
     created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+  },
+  relations: {
+    invoice: {
+      type: 'many-to-one',
+      target: 'Invoice',
+      joinColumn: { name: 'invoice' },
+      onDelete: 'CASCADE',
+    },
   },
 });

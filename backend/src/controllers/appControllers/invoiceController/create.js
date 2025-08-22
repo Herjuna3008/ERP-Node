@@ -42,7 +42,7 @@ const create = async (req, res) => {
   body['total'] = total;
   body['items'] = items;
 
-  let paymentStatus = calculate.sub(total, discount) === 0 ? 'paid' : 'unpaid';
+  let paymentStatus = calculate.sub(total, discount) === 0 ? 'PAID' : 'UNPAID';
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;
