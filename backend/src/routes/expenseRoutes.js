@@ -1,8 +1,8 @@
-import express from 'express';
-import { catchErrors } from '@/handlers/errorHandlers';
+const express = require('express');
+const { catchErrors } = require('@/handlers/errorHandlers');
 const expenseController = require('@/controllers/appControllers/expenseController');
 const payrollController = require('@/controllers/appControllers/payrollController');
-import rbac from '@/middlewares/rbac';
+const rbac = require('@/middlewares/rbac');
 
 const router = express.Router();
 
@@ -28,4 +28,4 @@ router
   .patch(rbac(['owner', 'manager']), catchErrors(payrollController.update))
   .delete(rbac(['owner', 'manager']), catchErrors(payrollController.delete));
 
-export default router;
+module.exports = router;
