@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <title>Surat Jalan</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Surat Jalan #{{number}}</h1>
+  <p>Tanggal: {{date}}</p>
+  <p>Klien: {{client}}</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Produk</th>
+        <th>Jumlah</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{items}}
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,3 +1,4 @@
+
 import pdf from "html-pdf"
 
 export function exportToPDF(html, options = {}) {
