@@ -1,31 +1,20 @@
-import React, { useState } from 'react';
+import { z } from 'zod';
+import RHFForm from '@/forms/RHFForm';
+import RHFInput from '@/forms/RHFInput';
 
-const ExpenseForm = ({ onSubmit }) => {
-  const [form, setForm] = useState({ amount: 0, description: '' });
+const schema = z.object({
+  amount: z.number().min(0, 'Amount is required'),
+  description: z.string().min(1, 'Description is required'),
+});
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(form);
-  };
+export default function ExpenseForm({ onSubmit }) {
+  const defaultValues = { amount: 0, description: '' };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Amount</label>
-        <input name="amount" type="number" value={form.amount} onChange={handleChange} />
-      </div>
-      <div>
-        <label>Description</label>
-        <input name="description" value={form.description} onChange={handleChange} />
-      </div>
+    <RHFForm schema={schema} defaultValues={defaultValues} onSubmit={onSubmit}>
+      <RHFInput name="amount" type="number" label="Amount" />
+      <RHFInput name="description" label="Description" />
       <button type="submit">Save Expense</button>
-    </form>
+    </RHFForm>
   );
-};
-
-export default ExpenseForm;
+}

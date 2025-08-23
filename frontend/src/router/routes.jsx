@@ -7,6 +7,8 @@ const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Customer = lazy(() => import('@/pages/Customer'));
+const Product = lazy(() => import('@/pages/Product'));
+const Supplier = lazy(() => import('@/pages/Supplier'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
 const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
 
@@ -21,6 +23,10 @@ const Payment = lazy(() => import('@/pages/Payment/index'));
 const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const DeliveryNote = lazy(() => import('@/pages/DeliveryNote'));
+const Expense = lazy(() => import('@/pages/Expense'));
+const Purchase = lazy(() => import('@/pages/Purchase'));
+const Reports = lazy(() => import('@/pages/Reports'));
+const Analytics = lazy(() => import('@/pages/Analytics'));
 
 const ReportPage = lazy(() => import('@/pages/Report'));
 const AnalyticsPage = lazy(() => import('@/pages/Analytics'));
@@ -34,8 +40,49 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const About = lazy(() => import('@/pages/About'));
 
 let routes = {
-  expense: [],
+  master: [
+    { path: '/customer', element: <Customer /> },
+    { path: '/product', element: <Product /> },
+    { path: '/supplier', element: <Supplier /> },
+    { path: '/payment/mode', element: <PaymentMode /> },
+    { path: '/taxes', element: <Taxes /> },
+    { path: '/settings', element: <Settings /> },
+    { path: '/settings/edit/:settingsKey', element: <Settings /> },
+  ],
+  purchasing: [
+    { path: '/purchase', element: <Purchase /> },
+  ],
+  delivery: [
+    { path: '/deliverynote', element: <DeliveryNote /> },
+  ],
+  expenses: [
+    { path: '/expense', element: <Expense /> },
+  ],
+  reports: [
+    { path: '/reports', element: <Reports /> },
+  ],
+  analytics: [
+    { path: '/analytics', element: <Analytics /> },
+  ],
   default: [
+    { path: '/login', element: <Navigate to="/" /> },
+    { path: '/logout', element: <Logout /> },
+    { path: '/about', element: <About /> },
+    { path: '/', element: <Dashboard /> },
+    { path: '/invoice', element: <Invoice /> },
+    { path: '/invoice/create', element: <InvoiceCreate /> },
+    { path: '/invoice/read/:id', element: <InvoiceRead /> },
+    { path: '/invoice/update/:id', element: <InvoiceUpdate /> },
+    { path: '/invoice/pay/:id', element: <InvoiceRecordPayment /> },
+    { path: '/quote', element: <Quote /> },
+    { path: '/quote/create', element: <QuoteCreate /> },
+    { path: '/quote/read/:id', element: <QuoteRead /> },
+    { path: '/quote/update/:id', element: <QuoteUpdate /> },
+    { path: '/payment', element: <Payment /> },
+    { path: '/payment/read/:id', element: <PaymentRead /> },
+    { path: '/payment/update/:id', element: <PaymentUpdate /> },
+    { path: '/profile', element: <Profile /> },
+    { path: '*', element: <NotFound /> },
     {
       path: '/login',
       element: <Navigate to="/" />,
