@@ -22,6 +22,7 @@ const routerApp = (entity, controller) => {
 
   if (entity === 'invoice') {
     router.route(`/invoices/:id/payments`).post(catchErrors(controller['payments']));
+    router.route(`/invoice/:id/download`).get(catchErrors(controller['download']));
   }
 
   if (entity === 'quote') {
@@ -35,6 +36,9 @@ const routerApp = (entity, controller) => {
     router
       .route(`/deliverynote/:id/generateInvoice`)
       .post(catchErrors(controller['generateInvoice']));
+    router
+      .route(`/deliverynote/:id/download`)
+      .get(catchErrors(controller['download']));
   }
 };
 

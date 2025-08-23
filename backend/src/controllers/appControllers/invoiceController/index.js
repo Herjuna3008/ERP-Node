@@ -11,6 +11,7 @@ const remove = require('./remove');
 const paginatedList = require('./paginatedList');
 const read = require('./read');
 const payments = require('./payments');
+const download = require('./download');
 
 methods.mail = sendMail;
 methods.create = create;
@@ -20,5 +21,6 @@ methods.summary = summary;
 methods.list = paginatedList;
 methods.read = read;
 methods.payments = payments;
+methods.download = download;
 
 module.exports = methods;
