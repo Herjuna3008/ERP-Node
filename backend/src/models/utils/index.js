@@ -12,6 +12,7 @@ const coreExclusions = [
   'Purchase',
   'PurchaseItem',
   'StockLedger',
+  'DeliveryItem',
 ];
 
 const constrollersList = [];
