@@ -184,7 +184,7 @@ export default function ReadItem({ config, selectedItem, onConvert }) {
           </Button>,
           <Button
             key={`${uniqueId()}`}
-            disabled={currentErp.status?.toLowerCase() !== 'accepted'}
+            disabled={currentErp.status?.toLowerCase() !== 'sent'}
             onClick={() => {
               if (onConvert) {
                 onConvert(currentErp._id);
