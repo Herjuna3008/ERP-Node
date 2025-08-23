@@ -323,6 +323,7 @@ export const erp = {
   convert:
     ({ entity, id }) =>
     async () => {
-      await request.convert({ entity, id });
+      const route = entity.endsWith('s') ? entity : `${entity}s`;
+      await request.convert({ entity: route, id });
     },
 };
