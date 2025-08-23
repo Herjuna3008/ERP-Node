@@ -2,7 +2,17 @@ const { basename, extname } = require('path');
 const { globSync } = require('glob');
 
 const entityFiles = globSync('./src/entities/*.js');
-const coreExclusions = ['Admin', 'AdminPassword', 'Setting', 'Product', 'Supplier', 'InvoiceItem'];
+const coreExclusions = [
+  'Admin',
+  'AdminPassword',
+  'Setting',
+  'Product',
+  'Supplier',
+  'InvoiceItem',
+  'Purchase',
+  'PurchaseItem',
+  'StockLedger',
+];
 
 const constrollersList = [];
 const entityList = [];
