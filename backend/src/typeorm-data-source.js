@@ -20,6 +20,8 @@ const Supplier = require('./entities/Supplier');
 const Purchase = require('./entities/Purchase');
 const PurchaseItem = require('./entities/PurchaseItem');
 const StockLedger = require('./entities/StockLedger');
+const DeliveryNote = require('./entities/DeliveryNote');
+const DeliveryItem = require('./entities/DeliveryItem');
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -45,6 +47,8 @@ const AppDataSource = new DataSource({
     Purchase,
     PurchaseItem,
     StockLedger,
+    DeliveryNote,
+    DeliveryItem,
   ],
 });
 

@@ -27,6 +27,15 @@ const routerApp = (entity, controller) => {
   if (entity === 'quote') {
     router.route(`/quotes/:id/convert`).post(catchErrors(controller['convert']));
   }
+
+  if (entity === 'deliverynote') {
+    router
+      .route(`/deliverynote/:id/post`)
+      .post(catchErrors(controller['post']));
+    router
+      .route(`/deliverynote/:id/generateInvoice`)
+      .post(catchErrors(controller['generateInvoice']));
+  }
 };
 
 routesList.forEach(({ entity, controllerName }) => {

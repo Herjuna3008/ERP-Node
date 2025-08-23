@@ -23,6 +23,7 @@ import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
 
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import { API_BASE_URL } from '@/config/serverApiConfig';
 
 function AddNewItem({ config }) {
   const navigate = useNavigate();
@@ -105,6 +106,19 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/invoice/pay/${record._id}`);
   };
 
+  const handlePost = async (record) => {
+    await fetch(`${API_BASE_URL}${entity}/${record._id}/post`, {
+      method: 'POST',
+    });
+    handelDataTableLoad(pagination);
+  };
+
+  const handleGenerateInvoice = async (record) => {
+    await fetch(`${API_BASE_URL}${entity}/${record._id}/generateInvoice`, {
+      method: 'POST',
+    });
+  };
+
   dataTableColumns = [
     ...dataTableColumns,
     {
@@ -131,6 +145,12 @@ export default function DataTable({ config, extra = [] }) {
                   break;
                 case 'recordPayment':
                   handleRecordPayment(record);
+                  break;
+                case 'post':
+                  handlePost(record);
+                  break;
+                case 'generateInvoice':
+                  handleGenerateInvoice(record);
                   break;
                 default:
                   break;
