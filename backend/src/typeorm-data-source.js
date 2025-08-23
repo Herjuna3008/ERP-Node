@@ -22,6 +22,10 @@ const PurchaseItem = require('./entities/PurchaseItem');
 const StockLedger = require('./entities/StockLedger');
 const DeliveryNote = require('./entities/DeliveryNote');
 const DeliveryItem = require('./entities/DeliveryItem');
+const Expense = require('./entities/Expense');
+const ExpenseCategory = require('./entities/ExpenseCategory');
+const Employee = require('./entities/Employee');
+const Payroll = require('./entities/Payroll');
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -49,6 +53,10 @@ const AppDataSource = new DataSource({
     StockLedger,
     DeliveryNote,
     DeliveryItem,
+    Expense,
+    ExpenseCategory,
+    Employee,
+    Payroll,
   ],
 });
 
