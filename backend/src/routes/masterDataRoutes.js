@@ -2,6 +2,8 @@ const express = require('express');
 const { catchErrors } = require('@/handlers/errorHandlers');
 const productController = require('@/controllers/masterData/productController');
 const supplierController = require('@/controllers/masterData/supplierController');
+const purchaseController = require('@/controllers/masterData/purchaseController');
+const stockLedgerController = require('@/controllers/masterData/stockLedgerController');
 const rbac = require('@/middlewares/rbac');
 
 const router = express.Router();
@@ -27,5 +29,13 @@ router
   .get(rbac(['owner', 'manager']), catchErrors(supplierController.read))
   .patch(rbac(['owner', 'manager']), catchErrors(supplierController.update))
   .delete(rbac(['owner', 'manager']), catchErrors(supplierController.delete));
+
+router
+  .route('/purchases')
+  .post(rbac(['owner', 'manager']), catchErrors(purchaseController.create));
+
+router
+  .route('/stock-ledger')
+  .get(rbac(['owner', 'manager']), catchErrors(stockLedgerController.list));
   
 module.exports = router; 
