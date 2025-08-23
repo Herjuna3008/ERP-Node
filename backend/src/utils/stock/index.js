@@ -47,4 +47,22 @@ const decreaseStock = async ({ productId, quantity, refId, type = 'DELIVERY' }) 
   return product;
 };
 
-module.exports = { increaseStock, calculateAverageCost, decreaseStock };
+const adjustStock = async ({ productId, quantity }) => {
+  const product = await productRepository.findOne({ where: { id: productId } });
+  if (!product) return null;
+
+  const diff = quantity - (product.stock || 0);
+  product.stock = quantity;
+  await productRepository.save(product);
+
+  const ledger = ledgerRepository.create({
+    product: productId,
+    quantity: diff,
+    type: 'ADJUSTMENT',
+    ref: null,
+    cost: 0,
+  });
+  await ledgerRepository.save(ledger);
+  return product;
+};
+module.exports = { increaseStock, calculateAverageCost, decreaseStock, adjustStock };

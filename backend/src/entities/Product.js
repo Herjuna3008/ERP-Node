@@ -9,6 +9,7 @@ module.exports = new EntitySchema({
     sku: { type: 'varchar', length: 100, nullable: true },
     price: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     stock: { type: 'float', default: 0 },
+    minStock: { type: 'float', default: 0 },
     averageCost: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     description: { type: 'text', nullable: true },
     removed: { type: 'boolean', default: false },
