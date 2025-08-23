@@ -22,6 +22,9 @@ const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const DeliveryNote = lazy(() => import('@/pages/DeliveryNote'));
 
+const ReportPage = lazy(() => import('@/pages/Report'));
+const AnalyticsPage = lazy(() => import('@/pages/Analytics'));
+
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
@@ -106,6 +109,14 @@ let routes = {
     {
       path: '/deliverynote',
       element: <DeliveryNote />,
+    },
+    {
+      path: '/reports',
+      element: <ReportPage />,
+    },
+    {
+      path: '/analytics',
+      element: <AnalyticsPage />,
     },
 
     {

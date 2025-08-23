@@ -10,6 +10,7 @@ const coreApiRouter = require('./routes/coreRoutes/coreApi');
 const coreDownloadRouter = require('./routes/coreRoutes/coreDownloadRouter');
 const corePublicRouter = require('./routes/coreRoutes/corePublicRouter');
 const adminAuth = require('./controllers/coreControllers/adminAuth');
+const reportRoutes = require('./routes/reportRoutes');
 
 const errorHandlers = require('./handlers/errorHandlers');
 const erpApiRouter = require('./routes/appRoutes/appApi');
@@ -43,6 +44,7 @@ app.use('/api', adminAuth.isValidAuthToken, coreApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, erpApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, masterDataRoutes);
 app.use('/api', adminAuth.isValidAuthToken, expenseRoutes);
+app.use('/api', adminAuth.isValidAuthToken, reportRoutes);
 app.use('/download', coreDownloadRouter);
 app.use('/public', corePublicRouter);
 
