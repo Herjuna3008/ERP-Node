@@ -28,6 +28,9 @@ const Purchase = lazy(() => import('@/pages/Purchase'));
 const Reports = lazy(() => import('@/pages/Reports'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 
+const ReportPage = lazy(() => import('@/pages/Report'));
+const AnalyticsPage = lazy(() => import('@/pages/Analytics'));
+
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
@@ -80,6 +83,114 @@ let routes = {
     { path: '/payment/update/:id', element: <PaymentUpdate /> },
     { path: '/profile', element: <Profile /> },
     { path: '*', element: <NotFound /> },
+    {
+      path: '/login',
+      element: <Navigate to="/" />,
+    },
+    {
+      path: '/logout',
+      element: <Logout />,
+    },
+    {
+      path: '/about',
+      element: <About />,
+    },
+    {
+      path: '/',
+      element: <Dashboard />,
+    },
+    {
+      path: '/customer',
+      element: <Customer />,
+    },
+
+    {
+      path: '/invoice',
+      element: <Invoice />,
+    },
+    {
+      path: '/invoice/create',
+      element: <InvoiceCreate />,
+    },
+    {
+      path: '/invoice/read/:id',
+      element: <InvoiceRead />,
+    },
+    {
+      path: '/invoice/update/:id',
+      element: <InvoiceUpdate />,
+    },
+    {
+      path: '/invoice/pay/:id',
+      element: <InvoiceRecordPayment />,
+    },
+    {
+      path: '/quote',
+      element: <Quote />,
+    },
+    {
+      path: '/quote/create',
+      element: <QuoteCreate />,
+    },
+    {
+      path: '/quote/read/:id',
+      element: <QuoteRead />,
+    },
+    {
+      path: '/quote/update/:id',
+      element: <QuoteUpdate />,
+    },
+    {
+      path: '/payment',
+      element: <Payment />,
+    },
+    {
+      path: '/payment/read/:id',
+      element: <PaymentRead />,
+    },
+    {
+      path: '/payment/update/:id',
+      element: <PaymentUpdate />,
+    },
+
+    {
+      path: '/deliverynote',
+      element: <DeliveryNote />,
+    },
+    {
+      path: '/reports',
+      element: <ReportPage />,
+    },
+    {
+      path: '/analytics',
+      element: <AnalyticsPage />,
+    },
+
+    {
+      path: '/settings',
+      element: <Settings />,
+    },
+    {
+      path: '/settings/edit/:settingsKey',
+      element: <Settings />,
+    },
+    {
+      path: '/payment/mode',
+      element: <PaymentMode />,
+    },
+    {
+      path: '/taxes',
+      element: <Taxes />,
+    },
+
+    {
+      path: '/profile',
+      element: <Profile />,
+    },
+    {
+      path: '*',
+      element: <NotFound />,
+    },
   ],
 };
 
