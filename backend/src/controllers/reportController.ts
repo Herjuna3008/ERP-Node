@@ -4,7 +4,8 @@ import Invoice from '@/entities/Invoice';
 import Purchase from '@/entities/Purchase';
 import Expense from '@/entities/Expense';
 import moment from 'moment';
-import { exportToPDF, exportToExcel } from '@/utils/exportUtils';
+import { exportToPDF } from '@/utils/exportUtils';
+import { exportToExcel } from '@/utils/exportExcel';
 
 const invoiceRepo = () => AppDataSource.getRepository(Invoice as any);
 const purchaseRepo = () => AppDataSource.getRepository(Purchase as any);
