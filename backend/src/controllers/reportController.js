@@ -3,7 +3,8 @@ const { AppDataSource } = require('@/typeorm-data-source');
 const Invoice = require('@/entities/Invoice');
 const Purchase = require('@/entities/Purchase');
 const Expense = require('@/entities/Expense');
-const { exportToPDF, exportToExcel } = require('@/utils/exportUtils');
+const { exportToPDF } = require('@/utils/exportUtils');
+const { exportToExcel } = require('@/utils/exportExcel');
 
 const invoiceRepo = () => AppDataSource.getRepository(Invoice);
 const purchaseRepo = () => AppDataSource.getRepository(Purchase);
