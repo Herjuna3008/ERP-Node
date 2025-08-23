@@ -16,6 +16,7 @@ require('dotenv').config({ path: '.env.local' });
 AppDataSource.initialize()
   .then(() => {
     console.log('Connected to MySQL');
+    require('./cron/reminder');
     const app = require('./app');
     app.set('port', process.env.PORT || 8888);
     const server = app.listen(app.get('port'), () => {
