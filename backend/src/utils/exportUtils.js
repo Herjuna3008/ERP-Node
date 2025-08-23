@@ -1,16 +1,16 @@
-import pdf from 'html-pdf';
-import ExcelJS from 'exceljs';
+const pdf = require('html-pdf');
+const ExcelJS = require('exceljs');
 
-export function exportToPDF(html: string, options: any = {}): Promise<Buffer> {
+exports.exportToPDF = (html, options = {}) => {
   return new Promise((resolve, reject) => {
-    pdf.create(html, { format: 'A4', ...options }).toBuffer((err: any, buffer: Buffer) => {
+    pdf.create(html, { format: 'A4', ...options }).toBuffer((err, buffer) => {
       if (err) return reject(err);
       resolve(buffer);
     });
   });
-}
+};
 
-export async function exportToExcel(data: any[], sheetName = 'Sheet1'): Promise<Buffer> {
+exports.exportToExcel = async (data, sheetName = 'Sheet1') => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName);
   if (data.length > 0) {
@@ -18,4 +18,4 @@ export async function exportToExcel(data: any[], sheetName = 'Sheet1'): Promise<
     data.forEach((row) => worksheet.addRow(row));
   }
   return workbook.xlsx.writeBuffer();
-}
+};
