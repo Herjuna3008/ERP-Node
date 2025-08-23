@@ -17,7 +17,7 @@ export default function ReadQuoteModule({ config }) {
   const { id } = useParams();
 
   const handleConvert = async () => {
-    const data = await request.post({ entity: `quotes/${id}/convert`, jsonData: {} });
+    const data = await request.convert({ entity: 'quotes', id });
     if (data.success) {
       navigate(`/invoice/read/${data.result.id}`);
     }
