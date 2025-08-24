@@ -5,7 +5,7 @@ import useLanguage from '@/locale/useLanguage';
 
 import { useMoney } from '@/settings';
 
-import { request } from '@/request';
+import api from '@/services/api';
 import useFetch from '@/hooks/useFetch';
 import useOnFetch from '@/hooks/useOnFetch';
 
@@ -24,7 +24,7 @@ export default function DashboardModule() {
   const money_format_settings = useSelector(selectMoneyFormat);
 
   const getStatsData = async ({ entity, currency }) => {
-    return await request.summary({
+    return await api.summary({
       entity,
       options: { currency },
     });
@@ -45,7 +45,7 @@ export default function DashboardModule() {
   } = useOnFetch();
 
   const { result: clientResult, isLoading: clientLoading } = useFetch(() =>
-    request.summary({ entity: 'client' })
+    api.summary({ entity: 'client' })
   );
 
   useEffect(() => {

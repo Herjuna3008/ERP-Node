@@ -1,5 +1,5 @@
 import * as actionTypes from './types';
-import { request } from '@/request';
+import api from '@/services/api';
 
 export const crud = {
   resetState:
@@ -44,7 +44,7 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.list({ entity, options });
+      let data = await api.list({ entity, options });
 
       if (data.success === true) {
         const result = {
@@ -78,9 +78,9 @@ export const crud = {
       });
       let data = null;
       if (withUpload) {
-        data = await request.createAndUpload({ entity, jsonData });
+        data = await api.createAndUpload({ entity, jsonData });
       } else {
-        data = await request.create({ entity, jsonData });
+        data = await api.create({ entity, jsonData });
       }
 
       if (data.success === true) {
@@ -111,7 +111,7 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.read({ entity, id });
+      let data = await api.read({ entity, id });
 
       if (data.success === true) {
         dispatch({
@@ -143,9 +143,9 @@ export const crud = {
       let data = null;
 
       if (withUpload) {
-        data = await request.updateAndUpload({ entity, id, jsonData });
+        data = await api.updateAndUpload({ entity, id, jsonData });
       } else {
-        data = await request.update({ entity, id, jsonData });
+        data = await api.update({ entity, id, jsonData });
       }
 
       if (data.success === true) {
@@ -180,7 +180,7 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.delete({ entity, id });
+      let data = await api.remove({ entity, id });
 
       if (data.success === true) {
         dispatch({
@@ -206,7 +206,7 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.search({ entity, options });
+      let data = await api.search({ entity, options });
 
       if (data.success === true) {
         dispatch({

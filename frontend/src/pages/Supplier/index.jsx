@@ -1,5 +1,5 @@
-import { ErpLayout } from '@/layout';
+import { SupplierDataTableModule } from '@/modules/SupplierModule';
 
 export default function Supplier() {
-  return <ErpLayout>Supplier master data</ErpLayout>;
+  return <SupplierDataTableModule />;
 }

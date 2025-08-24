@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-import { request } from '@/request';
+import api from '@/services/api';
 import useOnFetch from '@/hooks/useOnFetch';
 import useDebounce from '@/hooks/useDebounce';
 import { useNavigate } from 'react-router-dom';
@@ -62,7 +62,7 @@ export default function AutoCompleteAsync({
   );
 
   const asyncSearch = async (options) => {
-    return await request.search({ entity, options });
+    return await api.search({ entity, options });
   };
 
   let { onFetch, result, isSuccess, isLoading } = useOnFetch();

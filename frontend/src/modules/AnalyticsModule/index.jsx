@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Card } from 'antd';
 import useLanguage from '@/locale/useLanguage';
-import { request } from '@/request';
+import api from '@/services/api';
 
 export default function AnalyticsModule() {
   const translate = useLanguage();
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    request.get({ entity: '/reports/analytics' }).then((res) => setData(res));
+    api.get({ entity: '/reports/analytics' }).then((res) => setData(res));
   }, []);
 
   return (
