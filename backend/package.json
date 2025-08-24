@@ -11,7 +11,8 @@
     "production": "NODE_ENV=production",
     "setup": "node src/setup/setup.js",
     "upgrade": "node src/setup/upgrade.js",
-    "reset": "node src/setup/reset.js"
+    "reset": "node src/setup/reset.js",
+    "test": "NODE_ENV=test jest"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.509.0",
@@ -46,7 +47,10 @@
     "typeorm": "^0.3.25"
   },
   "devDependencies": {
-    "nodemon": "3.0.1"
+    "nodemon": "3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "sqlite3": "^5.1.7"
   },
   "_moduleAliases": {
     "@": "src"
@@ -63,4 +67,10 @@
     "url": "https://github.com/idurar/idurar-erp-crm//issues"
   },
   "homepage": "https://github.com/idurar/idurar-erp-crm/#readme"
+  ,
+  "jest": {
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  }
 }
