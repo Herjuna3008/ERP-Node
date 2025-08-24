@@ -8,12 +8,13 @@ import { selectUpdatedItem } from '@/redux/crud/selectors';
 
 import useLanguage from '@/locale/useLanguage';
 
-import { Button, Form } from 'antd';
+import { Button, Form, Grid } from 'antd';
 import Loading from '@/components/Loading';
+
+const { useBreakpoint } = Grid;
 
 export default function UpdateForm({ config, formElements, withUpload = false }) {
   let { entity } = config;
-  const translate = useLanguage();
   const dispatch = useDispatch();
   const { current, isLoading, isSuccess } = useSelector(selectUpdatedItem);
 
@@ -29,6 +30,8 @@ export default function UpdateForm({ config, formElements, withUpload = false })
 
   /////
   const [form] = Form.useForm();
+  const screens = useBreakpoint();
+  const translate = useLanguage();
 
   const onSubmit = (fieldsValue) => {
     const id = current._id;
@@ -103,7 +106,13 @@ export default function UpdateForm({ config, formElements, withUpload = false })
   return (
     <div style={show}>
       <Loading isLoading={isLoading}>
-        <Form form={form} layout="vertical" onFinish={onSubmit}>
+        <Form
+          form={form}
+          layout={screens.md ? 'horizontal' : 'vertical'}
+          labelCol={screens.md ? { span: 8 } : undefined}
+          wrapperCol={screens.md ? { span: 16 } : undefined}
+          onFinish={onSubmit}
+        >
           {formElements}
           <Form.Item
             style={{

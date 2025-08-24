@@ -35,6 +35,7 @@ export default function ReportModule() {
               { title: translate('Bucket'), dataIndex: 'bucket' },
               { title: translate('Amount'), dataIndex: 'amount' },
             ]}
+            scroll={{ x: 'max-content' }}
           />
         </Card>
       )}

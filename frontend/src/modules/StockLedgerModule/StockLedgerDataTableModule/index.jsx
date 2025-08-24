@@ -95,7 +95,7 @@ export default function StockLedgerDataTableModule() {
             onChange={(value) => setProduct(value)}
           />
         </Space>
-        <Table columns={columns} dataSource={filtered} rowKey="id" />
+        <Table columns={columns} dataSource={filtered} rowKey="id" scroll={{ x: 'max-content' }} />
         {chartData.length > 0 && (
           <Card title="Stock Overview">
             <ResponsiveContainer width="100%" height={300}>

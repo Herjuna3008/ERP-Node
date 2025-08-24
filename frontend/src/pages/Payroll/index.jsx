@@ -61,6 +61,7 @@ export default function Payroll() {
               },
               { title: translate('Total'), dataIndex: 'total' },
             ]}
+            scroll={{ x: 'max-content' }}
           />
         </Card>
       )}
