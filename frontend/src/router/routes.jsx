@@ -8,10 +8,11 @@ const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Customer = lazy(() => import('@/pages/Customer'));
 const Product = lazy(() => import('@/pages/Product'));
+const ProductCreate = lazy(() => import('@/pages/Product/ProductCreate'));
+const ProductUpdate = lazy(() => import('@/pages/Product/ProductUpdate'));
 const Supplier = lazy(() => import('@/pages/Supplier'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
 const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
-
 const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead'));
 const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate'));
 const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment'));
@@ -23,9 +24,15 @@ const Payment = lazy(() => import('@/pages/Payment/index'));
 const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const DeliveryNote = lazy(() => import('@/pages/DeliveryNote'));
+const DeliveryNoteCreate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteCreate'));
+const DeliveryNoteRead = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteRead'));
+const DeliveryNoteUpdate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteUpdate'));
 const Expense = lazy(() => import('@/pages/Expense'));
 const Payroll = lazy(() => import('@/pages/Payroll'));
+const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
 const Purchase = lazy(() => import('@/pages/Purchase'));
+const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
+const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
 const Reports = lazy(() => import('@/pages/Reports'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 
@@ -43,7 +50,7 @@ const About = lazy(() => import('@/pages/About'));
 let routes = {
   master: [
     { path: '/customer', element: <Customer /> },
-    { path: '/product', element: <Product /> },
+    { path: '/products', element: <Product /> },
     { path: '/supplier', element: <Supplier /> },
     { path: '/payment/mode', element: <PaymentMode /> },
     { path: '/taxes', element: <Taxes /> },
@@ -52,6 +59,8 @@ let routes = {
   ],
   purchasing: [
     { path: '/purchase', element: <Purchase /> },
+    { path: '/purchase/create', element: <PurchaseCreate /> },
+    { path: '/purchase/read/:id', element: <PurchaseRead /> },
   ],
   delivery: [
     { path: '/deliverynote', element: <DeliveryNote /> },
@@ -59,6 +68,7 @@ let routes = {
   expenses: [
     { path: '/expense', element: <Expense /> },
     { path: '/payroll', element: <Payroll /> },
+    { path: '/expensecategory', element: <ExpenseCategory /> },
   ],
   reports: [
     { path: '/reports', element: <Reports /> },
@@ -70,7 +80,9 @@ let routes = {
     { path: '/login', element: <Navigate to="/" /> },
     { path: '/logout', element: <Logout /> },
     { path: '/about', element: <About /> },
-    { path: '/', element: <Dashboard /> },
+        { path: '/products', element: <Product /> },
+    { path: '/products/create', element: <ProductCreate /> },
+    { path: '/products/update/:id', element: <ProductUpdate /> },
     { path: '/invoice', element: <Invoice /> },
     { path: '/invoice/create', element: <InvoiceCreate /> },
     { path: '/invoice/read/:id', element: <InvoiceRead /> },
@@ -83,6 +95,10 @@ let routes = {
     { path: '/payment', element: <Payment /> },
     { path: '/payment/read/:id', element: <PaymentRead /> },
     { path: '/payment/update/:id', element: <PaymentUpdate /> },
+    { path: '/expensecategory', element: <ExpenseCategory /> },
+    { path: '/purchase', element: <Purchase /> },
+    { path: '/purchase/create', element: <PurchaseCreate /> },
+    { path: '/purchase/read/:id', element: <PurchaseRead /> },
     { path: '/profile', element: <Profile /> },
     { path: '*', element: <NotFound /> },
     {
@@ -104,6 +120,18 @@ let routes = {
     {
       path: '/customer',
       element: <Customer />,
+    },
+    {
+      path: '/products',
+      element: <Product />,
+    },
+    {
+      path: '/products/create',
+      element: <ProductCreate />,
+    },
+    {
+      path: '/products/update/:id',
+      element: <ProductUpdate />,
     },
 
     {
@@ -158,6 +186,18 @@ let routes = {
     {
       path: '/deliverynote',
       element: <DeliveryNote />,
+    },
+    {
+      path: '/deliverynote/create',
+      element: <DeliveryNoteCreate />,
+    },
+    {
+      path: '/deliverynote/read/:id',
+      element: <DeliveryNoteRead />,
+    },
+    {
+      path: '/deliverynote/update/:id',
+      element: <DeliveryNoteUpdate />,
     },
     {
       path: '/reports',

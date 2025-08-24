@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Form, Result, Button } from 'antd';
 import useOnFetch from '@/hooks/useOnFetch';
-import { request } from '@/request';
+import api from '@/services/api';
 
 import ForgetPasswordForm from '@/forms/ForgetPasswordForm';
 
@@ -19,7 +19,7 @@ const ForgetPassword = () => {
   const { onFetch, isSuccess, isLoading } = useOnFetch();
 
   async function postData(data) {
-    return await request.post({ entity: 'forgetpassword', jsonData: data });
+    return await api.post({ entity: 'forgetpassword', jsonData: data });
   }
 
   const onFinish = (values) => {

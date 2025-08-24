@@ -8,9 +8,17 @@ export default function Expense() {
   const { dateFormat } = useDate();
   const entity = 'expense';
 
+  const searchConfig = {
+    entity: 'expensecategory',
+    displayLabels: ['name'],
+    searchFields: 'name',
+    outputValue: 'id',
+  };
+
   const dataTableColumns = [
     { title: translate('ID'), dataIndex: 'id' },
     { title: translate('Amount'), dataIndex: 'amount' },
+    { title: translate('expense_category'), dataIndex: ['category', 'name'] },
     {
       title: translate('Date'),
       dataIndex: 'date',
@@ -26,7 +34,7 @@ export default function Expense() {
     ENTITY_NAME: translate('expense'),
   };
 
-  const config = { entity, ...Labels, dataTableColumns };
+  const config = { entity, ...Labels, dataTableColumns, searchConfig };
 
   return <ExpenseDataTableModule config={config} />;
 }

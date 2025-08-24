@@ -4,7 +4,7 @@ import ReadItem from '@/modules/ErpPanelModule/ReadItem';
 
 import PageLoader from '@/components/PageLoader';
 import { erp } from '@/redux/erp/actions';
-import request from '@/request/request';
+import api from '@/services/api';
 
 import { selectReadItem } from '@/redux/erp/selectors';
 import { useLayoutEffect } from 'react';
@@ -17,7 +17,7 @@ export default function ReadQuoteModule({ config }) {
   const { id } = useParams();
 
   const handleConvert = async () => {
-    const data = await request.convert({ entity: 'quotes', id });
+    const data = await api.convert({ entity: 'quotes', id });
     if (data.success) {
       navigate(`/invoice/read/${data.result.id}`);
     }

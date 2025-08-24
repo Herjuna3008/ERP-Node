@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Select, Space } from 'antd';
-import { request } from '@/request';
+import api from '@/services/api';
 import errorHandler from '@/request/errorHandler';
 
 const { Option } = Select;
 
 const asyncList = (entity) => {
-  return request.list({ entity });
+  return api.list({ entity });
 };
 
 const asyncFilter = (entity, options) => {
-  return request.filter({ entity, options });
+  return api.filter({ entity, options });
 };
 
 const MultiStepSelectAsync = ({
