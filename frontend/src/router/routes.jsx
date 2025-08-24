@@ -24,7 +24,9 @@ const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const DeliveryNote = lazy(() => import('@/pages/DeliveryNote'));
 const Expense = lazy(() => import('@/pages/Expense'));
-const Purchase = lazy(() => import('@/pages/Purchase'));
+
+const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
+const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
 const Reports = lazy(() => import('@/pages/Reports'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 
@@ -51,6 +53,8 @@ let routes = {
   ],
   purchasing: [
     { path: '/purchase', element: <Purchase /> },
+    { path: '/purchase/create', element: <PurchaseCreate /> },
+    { path: '/purchase/read/:id', element: <PurchaseRead /> },
   ],
   delivery: [
     { path: '/deliverynote', element: <DeliveryNote /> },
@@ -81,6 +85,9 @@ let routes = {
     { path: '/payment', element: <Payment /> },
     { path: '/payment/read/:id', element: <PaymentRead /> },
     { path: '/payment/update/:id', element: <PaymentUpdate /> },
+    { path: '/purchase', element: <Purchase /> },
+    { path: '/purchase/create', element: <PurchaseCreate /> },
+    { path: '/purchase/read/:id', element: <PurchaseRead /> },
     { path: '/profile', element: <Profile /> },
     { path: '*', element: <NotFound /> },
     {
