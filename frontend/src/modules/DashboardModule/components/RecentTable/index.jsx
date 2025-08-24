@@ -100,7 +100,7 @@ export default function RecentTable({ ...props }) {
       dataSource={isSuccess && firstFiveItems()}
       pagination={false}
       loading={isLoading}
-      scroll={{ x: true }}
+      scroll={{ x: 'max-content' }}
     />
   );
 }

@@ -107,6 +107,7 @@ export default function SupplierDataTableModule() {
         dataSource={filtered}
         columns={columns}
         loading={loading}
+        scroll={{ x: 'max-content' }}
       />
       <Modal
         open={modalOpen}
