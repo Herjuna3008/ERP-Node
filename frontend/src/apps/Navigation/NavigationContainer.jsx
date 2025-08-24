@@ -17,23 +17,40 @@ import {
   FileSyncOutlined,
   DashboardOutlined,
   TagOutlined,
-  TagsOutlined,
   UserOutlined,
   CreditCardOutlined,
   MenuOutlined,
-  FileOutlined,
   ShopOutlined,
   FilterOutlined,
   WalletOutlined,
   ReconciliationOutlined,
+  IdcardOutlined,
+  ShoppingCartOutlined,
+  FileDoneOutlined,
+  DropboxOutlined,
+  DollarOutlined,
+  PayCircleOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
 
 export default function Navigation() {
-  const { isMobile } = useResponsive();
+  const { screenSize } = useResponsive();
+  const {
+    appContextAction: { navMenu },
+  } = useAppContext();
 
-  return isMobile ? <MobileSidebar /> : <Sidebar collapsible={false} />;
+  useEffect(() => {
+    if (!screenSize.md) {
+      navMenu.close();
+    } else {
+      navMenu.open();
+    }
+  }, [screenSize.md, navMenu]);
+
+  return !screenSize.sm ? <MobileSidebar /> : <Sidebar collapsible={true} />;
 }
 
 function Sidebar({ collapsible, isMobile = false }) {
@@ -75,7 +92,61 @@ function Sidebar({ collapsible, isMobile = false }) {
       icon: <CreditCardOutlined />,
       label: <Link to={'/payment'}>{translate('payments')}</Link>,
     },
-
+    {
+      key: 'products',
+      icon: <TagOutlined />,
+      label: <Link to={'/products'}>Produk</Link>,
+    },
+    {
+      key: 'supplier',
+      icon: <IdcardOutlined />,
+      label: <Link to={'/supplier'}>Pemasok</Link>,
+    },
+    {
+      key: 'purchase',
+      icon: <ShoppingCartOutlined />,
+      label: <Link to={'/purchase'}>Pembelian</Link>,
+    },
+    {
+      key: 'deliverynote',
+      icon: <FileDoneOutlined />,
+      label: <Link to={'/deliverynote'}>Surat Jalan</Link>,
+    },
+    {
+      key: 'stock',
+      icon: <DropboxOutlined />,
+      label: <Link to={'/stockledger'}>Stok</Link>,
+    },
+    {
+      key: 'expense',
+      icon: <DollarOutlined />,
+      label: <Link to={'/expense'}>Pengeluaran</Link>,
+    },
+    {
+      key: 'expenseCategory',
+      icon: <FilterOutlined />,
+      label: <Link to={'/expensecategory'}>Kategori Pengeluaran</Link>,
+    },
+    {
+      key: 'employee',
+      icon: <UserOutlined />,
+      label: <Link to={'/employee'}>Karyawan</Link>,
+    },
+    {
+      key: 'payroll',
+      icon: <PayCircleOutlined />,
+      label: <Link to={'/payroll'}>Penggajian</Link>,
+    },
+    {
+      key: 'reports',
+      icon: <FileTextOutlined />,
+      label: <Link to={'/reports'}>Laporan</Link>,
+    },
+    {
+      key: 'analytics',
+      icon: <BarChartOutlined />,
+      label: <Link to={'/analytics'}>Analitik</Link>,
+    },
     {
       key: 'paymentMode',
       label: <Link to={'/payment/mode'}>{translate('payments_mode')}</Link>,
