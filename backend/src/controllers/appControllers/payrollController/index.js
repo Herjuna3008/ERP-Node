@@ -6,6 +6,7 @@ const repository = AppDataSource.getRepository('Payroll');
 const expenseRepository = AppDataSource.getRepository('Expense');
 
 const methods = createCRUDController(repository);
+const summary = require('./summary');
 
 methods.create = async (req, res) => {
   try {
@@ -31,5 +32,7 @@ methods.create = async (req, res) => {
     return res.status(500).json({ success: false, result: null, message: error.message });
   }
 };
+
+methods.summary = summary;
 
 module.exports = methods;
