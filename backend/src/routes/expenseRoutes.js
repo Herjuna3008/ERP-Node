@@ -1,6 +1,7 @@
 const express = require('express');
 const { catchErrors } = require('@/handlers/errorHandlers');
 const expenseController = require('@/controllers/appControllers/expenseController');
+const expenseCategoryController = require('@/controllers/appControllers/expenseCategoryController');
 const payrollController = require('@/controllers/appControllers/payrollController');
 const rbac = require('@/middlewares/rbac');
 
@@ -16,6 +17,17 @@ router
   .get(rbac(['owner', 'manager']), catchErrors(expenseController.read))
   .patch(rbac(['owner', 'manager']), catchErrors(expenseController.update))
   .delete(rbac(['owner', 'manager']), catchErrors(expenseController.delete));
+
+router
+  .route('/expensecategory')
+  .get(rbac(['owner', 'manager']), catchErrors(expenseCategoryController.list))
+  .post(rbac(['owner', 'manager']), catchErrors(expenseCategoryController.create));
+
+router
+  .route('/expensecategory/:id')
+  .get(rbac(['owner', 'manager']), catchErrors(expenseCategoryController.read))
+  .patch(rbac(['owner', 'manager']), catchErrors(expenseCategoryController.update))
+  .delete(rbac(['owner', 'manager']), catchErrors(expenseCategoryController.delete));
 
 router
   .route('/payroll')
