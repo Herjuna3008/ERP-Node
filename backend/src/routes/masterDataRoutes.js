@@ -33,7 +33,14 @@ router
 
 router
   .route('/purchases')
+  .get(rbac(['owner', 'manager']), catchErrors(purchaseController.list))
   .post(rbac(['owner', 'manager']), catchErrors(purchaseController.create));
+
+router
+  .route('/purchases/:id')
+  .get(rbac(['owner', 'manager']), catchErrors(purchaseController.read))
+  .patch(rbac(['owner', 'manager']), catchErrors(purchaseController.update))
+  .delete(rbac(['owner', 'manager']), catchErrors(purchaseController.delete));
 
 router
   .route('/stock-ledger')
