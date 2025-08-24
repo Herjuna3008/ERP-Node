@@ -27,13 +27,10 @@ const ExpenseCategory = require('./entities/ExpenseCategory');
 const Employee = require('./entities/Employee');
 const Payroll = require('./entities/Payroll');
 
-const AppDataSource = new DataSource({
-  type: 'mysql',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  username: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'erp',
+const isTest = process.env.NODE_ENV === 'test';
+
+const dataSourceOptions = {
+  type: isTest ? 'sqlite' : 'mysql',
   synchronize: true,
   logging: false,
   entities: [
@@ -58,6 +55,18 @@ const AppDataSource = new DataSource({
     Employee,
     Payroll,
   ],
-});
+};
+
+if (isTest) {
+  dataSourceOptions.database = ':memory:';
+} else {
+  dataSourceOptions.host = process.env.DB_HOST || 'localhost';
+  dataSourceOptions.port = parseInt(process.env.DB_PORT || '3306');
+  dataSourceOptions.username = process.env.DB_USER || 'root';
+  dataSourceOptions.password = process.env.DB_PASSWORD || '';
+  dataSourceOptions.database = process.env.DB_NAME || 'erp';
+}
+
+const AppDataSource = new DataSource(dataSourceOptions);
 
 module.exports = { AppDataSource };
