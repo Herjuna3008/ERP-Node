@@ -1,35 +1,65 @@
-import React, { useState } from 'react';
+import dayjs from 'dayjs';
+import { Form, Input, InputNumber, Button, DatePicker } from 'antd';
+import SelectAsync from '@/components/SelectAsync';
+import useLanguage from '@/locale/useLanguage';
+import { useDate } from '@/settings';
 
-const PayrollForm = ({ onSubmit }) => {
-  const [form, setForm] = useState({ employee: '', amount: 0, description: '' });
+export default function PayrollForm({ onSubmit }) {
+  const [form] = Form.useForm();
+  const translate = useLanguage();
+  const { dateFormat } = useDate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(form);
+  const handleFinish = (values) => {
+    onSubmit({
+      ...values,
+      date: values.date.format('YYYY-MM-DD'),
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Employee ID</label>
-        <input name="employee" value={form.employee} onChange={handleChange} />
-      </div>
-      <div>
-        <label>Amount</label>
-        <input name="amount" type="number" value={form.amount} onChange={handleChange} />
-      </div>
-      <div>
-        <label>Description</label>
-        <input name="description" value={form.description} onChange={handleChange} />
-      </div>
-      <button type="submit">Save Payroll</button>
-    </form>
-  );
-};
+    <Form form={form} layout="vertical" onFinish={handleFinish}>
+      <Form.Item
+        name="employee"
+        label={translate('Employee')}
+        rules={[{ required: true }]}
+      >
+        <SelectAsync entity="employee" displayLabels={['firstName', 'lastName']} />
+      </Form.Item>
 
-export default PayrollForm;
+      <Form.Item
+        name="amount"
+        label={translate('Amount')}
+        rules={[{ required: true }]}
+      >
+        <InputNumber style={{ width: '100%' }} min={0} />
+      </Form.Item>
+
+      <Form.Item
+        name="date"
+        label={translate('Date')}
+        rules={[{ required: true }]}
+        initialValue={dayjs()}
+      >
+        <DatePicker format={dateFormat} style={{ width: '100%' }} />
+      </Form.Item>
+
+      <Form.Item
+        name="category"
+        label={translate('expense_category')}
+        rules={[{ required: true }]}
+      >
+        <SelectAsync entity="expenseCategory" displayLabels={['name']} />
+      </Form.Item>
+
+      <Form.Item name="description" label={translate('Description')}>
+        <Input />
+      </Form.Item>
+
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          {translate('Save')}
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+}

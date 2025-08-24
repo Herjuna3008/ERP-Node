@@ -13,7 +13,6 @@ const ProductUpdate = lazy(() => import('@/pages/Product/ProductUpdate'));
 const Supplier = lazy(() => import('@/pages/Supplier'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
 const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
-
 const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead'));
 const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate'));
 const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment'));
@@ -29,6 +28,7 @@ const DeliveryNoteCreate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteC
 const DeliveryNoteRead = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteRead'));
 const DeliveryNoteUpdate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteUpdate'));
 const Expense = lazy(() => import('@/pages/Expense'));
+const Payroll = lazy(() => import('@/pages/Payroll'));
 const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
 const Purchase = lazy(() => import('@/pages/Purchase'));
 const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
@@ -67,6 +67,7 @@ let routes = {
   ],
   expenses: [
     { path: '/expense', element: <Expense /> },
+    { path: '/payroll', element: <Payroll /> },
     { path: '/expensecategory', element: <ExpenseCategory /> },
   ],
   reports: [
