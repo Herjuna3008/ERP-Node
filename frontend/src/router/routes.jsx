@@ -29,6 +29,7 @@ const DeliveryNoteCreate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteC
 const DeliveryNoteRead = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteRead'));
 const DeliveryNoteUpdate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteUpdate'));
 const Expense = lazy(() => import('@/pages/Expense'));
+const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
 const Purchase = lazy(() => import('@/pages/Purchase'));
 const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
 const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
@@ -66,6 +67,7 @@ let routes = {
   ],
   expenses: [
     { path: '/expense', element: <Expense /> },
+    { path: '/expensecategory', element: <ExpenseCategory /> },
   ],
   reports: [
     { path: '/reports', element: <Reports /> },
@@ -92,6 +94,7 @@ let routes = {
     { path: '/payment', element: <Payment /> },
     { path: '/payment/read/:id', element: <PaymentRead /> },
     { path: '/payment/update/:id', element: <PaymentUpdate /> },
+    { path: '/expensecategory', element: <ExpenseCategory /> },
     { path: '/purchase', element: <Purchase /> },
     { path: '/purchase/create', element: <PurchaseCreate /> },
     { path: '/purchase/read/:id', element: <PurchaseRead /> },
