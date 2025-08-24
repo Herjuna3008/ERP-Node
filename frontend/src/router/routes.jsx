@@ -8,6 +8,8 @@ const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Customer = lazy(() => import('@/pages/Customer'));
 const Product = lazy(() => import('@/pages/Product'));
+const ProductCreate = lazy(() => import('@/pages/Product/ProductCreate'));
+const ProductUpdate = lazy(() => import('@/pages/Product/ProductUpdate'));
 const Supplier = lazy(() => import('@/pages/Supplier'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
 const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
@@ -42,7 +44,7 @@ const About = lazy(() => import('@/pages/About'));
 let routes = {
   master: [
     { path: '/customer', element: <Customer /> },
-    { path: '/product', element: <Product /> },
+    { path: '/products', element: <Product /> },
     { path: '/supplier', element: <Supplier /> },
     { path: '/payment/mode', element: <PaymentMode /> },
     { path: '/taxes', element: <Taxes /> },
@@ -68,7 +70,9 @@ let routes = {
     { path: '/login', element: <Navigate to="/" /> },
     { path: '/logout', element: <Logout /> },
     { path: '/about', element: <About /> },
-    { path: '/', element: <Dashboard /> },
+        { path: '/products', element: <Product /> },
+    { path: '/products/create', element: <ProductCreate /> },
+    { path: '/products/update/:id', element: <ProductUpdate /> },
     { path: '/invoice', element: <Invoice /> },
     { path: '/invoice/create', element: <InvoiceCreate /> },
     { path: '/invoice/read/:id', element: <InvoiceRead /> },
@@ -102,6 +106,18 @@ let routes = {
     {
       path: '/customer',
       element: <Customer />,
+    },
+    {
+      path: '/products',
+      element: <Product />,
+    },
+    {
+      path: '/products/create',
+      element: <ProductCreate />,
+    },
+    {
+      path: '/products/update/:id',
+      element: <ProductUpdate />,
     },
 
     {
