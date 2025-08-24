@@ -29,7 +29,7 @@ const DeliveryNoteCreate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteC
 const DeliveryNoteRead = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteRead'));
 const DeliveryNoteUpdate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteUpdate'));
 const Expense = lazy(() => import('@/pages/Expense'));
-
+const Purchase = lazy(() => import('@/pages/Purchase'));
 const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
 const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
 const Reports = lazy(() => import('@/pages/Reports'));
