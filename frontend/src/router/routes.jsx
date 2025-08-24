@@ -25,6 +25,9 @@ const Payment = lazy(() => import('@/pages/Payment/index'));
 const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
 const DeliveryNote = lazy(() => import('@/pages/DeliveryNote'));
+const DeliveryNoteCreate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteCreate'));
+const DeliveryNoteRead = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteRead'));
+const DeliveryNoteUpdate = lazy(() => import('@/pages/DeliveryNote/DeliveryNoteUpdate'));
 const Expense = lazy(() => import('@/pages/Expense'));
 
 const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
@@ -179,6 +182,18 @@ let routes = {
     {
       path: '/deliverynote',
       element: <DeliveryNote />,
+    },
+    {
+      path: '/deliverynote/create',
+      element: <DeliveryNoteCreate />,
+    },
+    {
+      path: '/deliverynote/read/:id',
+      element: <DeliveryNoteRead />,
+    },
+    {
+      path: '/deliverynote/update/:id',
+      element: <DeliveryNoteUpdate />,
     },
     {
       path: '/reports',

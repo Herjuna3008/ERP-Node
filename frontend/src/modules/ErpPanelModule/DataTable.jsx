@@ -93,7 +93,7 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/${entity}/update/${record._id}`);
   };
   const handleDownload = (record) => {
-    window.open(`${DOWNLOAD_BASE_URL}${entity}/${entity}-${record._id}.pdf`, '_blank');
+    window.open(`${API_BASE_URL}${entity}/${record._id}/download`, '_blank');
   };
 
   const handleDelete = (record) => {
@@ -117,6 +117,7 @@ export default function DataTable({ config, extra = [] }) {
     await fetch(`${API_BASE_URL}${entity}/${record._id}/generateInvoice`, {
       method: 'POST',
     });
+    handelDataTableLoad(pagination);
   };
 
   dataTableColumns = [
