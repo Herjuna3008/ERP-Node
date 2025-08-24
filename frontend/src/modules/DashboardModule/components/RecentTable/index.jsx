@@ -1,6 +1,6 @@
 import { Dropdown, Table } from 'antd';
 
-import { request } from '@/request';
+import api from '@/services/api';
 import useFetch from '@/hooks/useFetch';
 
 import { EllipsisOutlined, EyeOutlined, EditOutlined, FilePdfOutlined } from '@ant-design/icons';
@@ -85,7 +85,7 @@ export default function RecentTable({ ...props }) {
   ];
 
   const asyncList = () => {
-    return request.list({ entity });
+    return api.list({ entity });
   };
   const { result, isLoading, isSuccess } = useFetch(asyncList);
   const firstFiveItems = () => {

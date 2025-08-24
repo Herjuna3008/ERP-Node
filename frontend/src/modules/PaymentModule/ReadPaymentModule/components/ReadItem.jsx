@@ -13,7 +13,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { erp } from '@/redux/erp/actions';
 import useLanguage from '@/locale/useLanguage';
-import request from '@/request/request';
+import api from '@/services/api';
 
 import { generate as uniqueId } from 'shortid';
 
@@ -69,7 +69,7 @@ export default function ReadItem({ config, selectedItem }) {
     const loadClient = async () => {
       if (currentErp?.client) {
         if (typeof currentErp.client === 'number') {
-          const data = await request.read({ entity: 'client', id: currentErp.client });
+          const data = await api.read({ entity: 'client', id: currentErp.client });
           if (data.success) {
             setClient(data.result);
           }

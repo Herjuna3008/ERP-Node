@@ -1,6 +1,6 @@
 import * as actionTypes from './types';
 import * as authService from '@/auth';
-import { request } from '@/request';
+import api from '@/services/api';
 import { notification } from 'antd';
 
 export const login =
@@ -152,7 +152,7 @@ export const logout = () => async (dispatch) => {
 export const updateProfile =
   ({ entity, jsonData }) =>
   async (dispatch) => {
-    let data = await request.updateAndUpload({ entity, id: '', jsonData });
+    let data = await api.updateAndUpload({ entity, id: '', jsonData });
 
     if (data.success === true) {
       dispatch({
