@@ -1,6 +1,6 @@
 import { useProfileContext } from '@/context/profileContext';
 import useOnFetch from '@/hooks/useOnFetch';
-import { request } from '@/request';
+import api from '@/services/api';
 import { Form, Input, Modal } from 'antd';
 
 import useLanguage from '@/locale/useLanguage';
@@ -20,7 +20,7 @@ const PasswordModal = () => {
   const handelSubmit = (fieldsValue) => {
     const entity = 'admin/profile/password/';
     const updateFn = async () => {
-      return await request.patch({ entity, jsonData: fieldsValue });
+      return await api.patch({ entity, jsonData: fieldsValue });
     };
     const callback = updateFn();
     onFetch(callback);

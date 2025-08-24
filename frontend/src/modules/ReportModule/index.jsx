@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, Table } from 'antd';
 import useLanguage from '@/locale/useLanguage';
-import { request } from '@/request';
+import api from '@/services/api';
 
 export default function ReportModule() {
   const translate = useLanguage();
@@ -9,8 +9,8 @@ export default function ReportModule() {
   const [aging, setAging] = useState(null);
 
   useEffect(() => {
-    request.get({ entity: '/reports/summary' }).then((res) => setSummary(res));
-    request.get({ entity: '/reports/ar-aging' }).then((res) => setAging(res));
+    api.get({ entity: '/reports/summary' }).then((res) => setSummary(res));
+    api.get({ entity: '/reports/ar-aging' }).then((res) => setAging(res));
   }, []);
 
   const agingData = aging
