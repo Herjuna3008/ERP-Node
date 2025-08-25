@@ -1,10 +1,10 @@
-const { addId } = require('./utils');
+const { addId, hasColumn } = require('./utils');
 
 const read = async (repository, req, res) => {
   try {
-    const result = await repository.findOne({
-      where: { id: req.params.id, removed: false },
-    });
+    const where = { id: req.params.id };
+    if (hasColumn(repository, 'removed')) where.removed = false;
+    const result = await repository.findOne({ where });
     if (!result) {
       return res.status(404).json({
         success: false,

@@ -20,5 +20,20 @@ function addId(entity) {
   return entity;
 }
 
-module.exports = { addId };
+/**
+ * Checks if the provided TypeORM repository contains a specific column.
+ *
+ * Some legacy entities in this project do not implement the `removed`
+ * column used for soft deletes. Generic CRUD helpers need to know if the
+ * column exists before referencing it in queries.
+ *
+ * @param {import('typeorm').Repository} repository - TypeORM repository instance
+ * @param {string} column - Column name to look for
+ * @returns {boolean} True when the column exists on the entity
+ */
+function hasColumn(repository, column) {
+  return repository.metadata.columns.some((c) => c.propertyName === column);
+}
+
+module.exports = { addId, hasColumn };
 
