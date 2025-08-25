@@ -2,7 +2,7 @@ import { ErpLayout } from '@/layout';
 
 import PageLoader from '@/components/PageLoader';
 import { erp } from '@/redux/erp/actions';
-import { selectItemById, selectCurrentItem, selectRecordPaymentItem } from '@/redux/erp/selectors';
+import { selectItemById, selectCurrentItem } from '@/redux/erp/selectors';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -13,25 +13,25 @@ export default function RecordPaymentModule({ config }) {
   const { id } = useParams();
 
   let item = useSelector(selectItemById(id));
+  const { result: currentResult } = useSelector(selectCurrentItem);
+  item = item || currentResult;
+
+  useEffect(() => {
+    if (!item) {
+      dispatch(erp.read({ entity: config.entity, id }));
+    }
+  }, [dispatch, id]);
 
   useEffect(() => {
     if (item) {
       dispatch(erp.currentItem({ data: item }));
-    } else {
-      dispatch(erp.read({ entity: config.entity, id }));
+      dispatch(erp.currentAction({ actionType: 'recordPayment', data: item }));
     }
-  }, [item, id]);
-
-  const { result: currentResult } = useSelector(selectCurrentItem);
-  item = currentResult;
-
-  useEffect(() => {
-    dispatch(erp.currentAction({ actionType: 'recordPayment', data: item }));
-  }, [item]);
+  }, [dispatch, item]);
 
   return (
     <ErpLayout>
-      {item ? <Payment config={config} currentItem={currentResult} /> : <PageLoader />}
+      {item ? <Payment config={config} currentItem={item} /> : <PageLoader />}
     </ErpLayout>
   );
 }

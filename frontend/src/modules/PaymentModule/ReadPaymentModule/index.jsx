@@ -14,17 +14,21 @@ export default function ReadPaymentModule({ config }) {
   const { id } = useParams();
   let item = useSelector(selectItemById(id));
 
+  const { result: currentResult } = useSelector(selectCurrentItem);
+  item = item || currentResult;
+
+  useEffect(() => {
+    if (!item) {
+      dispatch(erp.read({ entity: config.entity, id }));
+    }
+  }, [dispatch, id]);
+
   useEffect(() => {
     if (item) {
       dispatch(erp.currentItem({ data: item }));
-    } else {
-      dispatch(erp.read({ entity: config.entity, id }));
     }
-  }, [item]);
+  }, [dispatch, item]);
 
-  const { result: currentResult } = useSelector(selectCurrentItem);
-
-  item = currentResult;
   return (
     <ErpLayout>
       {item ? <ReadItem config={config} selectedItem={item} /> : <PageLoader />}
