@@ -39,16 +39,17 @@ const { Sider } = Layout;
 export default function Navigation() {
   const { screenSize } = useResponsive();
   const {
+    state: { isNavMenuClose },
     appContextAction: { navMenu },
   } = useAppContext();
 
   useEffect(() => {
-    if (!screenSize.md) {
+    if (!screenSize.md && !isNavMenuClose) {
       navMenu.close();
-    } else {
+    } else if (screenSize.md && isNavMenuClose) {
       navMenu.open();
     }
-  }, [screenSize.md, navMenu]);
+  }, [screenSize.md, isNavMenuClose, navMenu]);
 
   return !screenSize.sm ? <MobileSidebar /> : <Sidebar collapsible={true} />;
 }
