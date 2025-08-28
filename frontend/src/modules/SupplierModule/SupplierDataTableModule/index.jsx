@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Input, Space } from 'antd';
+import { Table, Button, Drawer, Input, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { ErpLayout } from '@/layout';
 import SupplierForm from '../SupplierForm';
@@ -14,7 +14,7 @@ export default function SupplierDataTableModule() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
   const load = async () => {
@@ -36,7 +36,7 @@ export default function SupplierDataTableModule() {
     } else {
       await createSupplier(values);
     }
-    setModalOpen(false);
+    setDrawerOpen(false);
     setEditing(null);
     load();
   };
@@ -69,7 +69,7 @@ export default function SupplierDataTableModule() {
             icon={<EditOutlined />}
             onClick={() => {
               setEditing(record);
-              setModalOpen(true);
+              setDrawerOpen(true);
             }}
           />
           <Button
@@ -96,7 +96,7 @@ export default function SupplierDataTableModule() {
           icon={<PlusOutlined />}
           onClick={() => {
             setEditing(null);
-            setModalOpen(true);
+            setDrawerOpen(true);
           }}
         >
           Add Supplier
@@ -109,17 +109,18 @@ export default function SupplierDataTableModule() {
         loading={loading}
         scroll={{ x: 'max-content' }}
       />
-      <Modal
-        open={modalOpen}
-        footer={null}
+      <Drawer
+        title={editing ? 'Edit Supplier' : 'Add Supplier'}
+        width={480}
+        open={drawerOpen}
         destroyOnClose
-        onCancel={() => {
-          setModalOpen(false);
+        onClose={() => {
+          setDrawerOpen(false);
           setEditing(null);
         }}
       >
         <SupplierForm onSubmit={handleSubmit} defaultValues={editing || {}} />
-      </Modal>
+      </Drawer>
     </ErpLayout>
   );
 }
