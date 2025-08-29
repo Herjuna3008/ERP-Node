@@ -77,7 +77,7 @@ export default function DeliveryNoteForm({ current = null }) {
                       searchFields={'name'}
                       redirectLabel={translate('Add New Product')}
                       withRedirect
-                      urlToRedirect={'/product'}
+                      urlToRedirect={'/products/create'}
                     />
                   </Form.Item>
                 </Col>
