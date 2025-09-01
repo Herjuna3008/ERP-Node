@@ -2,6 +2,9 @@ const { AppDataSource } = require('@/typeorm-data-source');
 
 const QuoteRepository = AppDataSource.getRepository('Quote');
 const InvoiceRepository = AppDataSource.getRepository('Invoice');
+const ClientRepository = AppDataSource.getRepository('Client');
+
+const { readBySettingKey, increaseBySettingKey } = require('@/middlewares/settings');
 
 const convertQuoteToInvoice = async (id, adminId) => {
   const quote = await QuoteRepository.findOne({ where: { id, removed: false } });
@@ -18,12 +21,24 @@ const convertQuoteToInvoice = async (id, adminId) => {
   if (quote.converted || status === 'CONVERTED') {
     return { error: 'Quote already converted' };
   }
+  // generate new invoice number/year
+  const lastNumberSetting = await readBySettingKey({ settingKey: 'last_invoice_number' });
+  const number = (lastNumberSetting?.settingValue || 0) + 1;
+  const year = new Date().getFullYear();
+
+  // compute expired date based on client default term
+  const client = await ClientRepository.findOne({ where: { id: quote.client, removed: false } });
+  const term = client?.defaultTerm || client?.term || 0;
+  const date = new Date();
+  const expiredDate = new Date(date);
+  expiredDate.setDate(expiredDate.getDate() + term);
+
   const invoiceData = {
-    number: quote.number,
-    year: quote.year,
+    number,
+    year,
     content: quote.content,
-    date: quote.date,
-    expiredDate: quote.dueDate,
+    date,
+    expiredDate,
     client: quote.client,
     items: quote.items,
     taxRate: quote.taxRate,
@@ -34,17 +49,17 @@ const convertQuoteToInvoice = async (id, adminId) => {
     discount: quote.discount,
     notes: quote.notes,
     createdBy: adminId,
-    paymentStatus: 'unpaid',
+    paymentStatus: 'UNPAID',
     credit: 0,
   };
 
-
   const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
 
+  // persist new invoice number for next use
+  increaseBySettingKey({ settingKey: 'last_invoice_number' });
+
   quote.status = 'CONVERTED';
-  if (Object.prototype.hasOwnProperty.call(quote, 'converted')) {
-    quote.converted = true;
-  }
+  quote.converted = invoice.id;
   await QuoteRepository.save(quote);
 
   return { invoiceId: invoice.id };
