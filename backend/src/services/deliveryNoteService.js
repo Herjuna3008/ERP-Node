@@ -25,15 +25,30 @@ const post = async (id) => {
   const note = await noteRepository.findOne({ where: { id } });
   if (!note) return null;
   if (note.status === 'POSTED') return note;
-  const items = await itemRepository.find({ where: { deliveryNote: id } });
+
+  const items = await itemRepository.find({
+    where: { deliveryNote: id },
+    relations: ['product'],
+  });
+
+  for (const item of items) {
+    const available = Number(item.product?.stock || 0);
+    if (available < item.quantity) {
+      return {
+        error: `Insufficient stock for product ${item.product?.name || ''}`.trim(),
+      };
+    }
+  }
+
   for (const item of items) {
     await decreaseStock({
-      productId: item.product,
+      productId: item.product.id,
       quantity: item.quantity,
       refId: id,
       type: 'DELIVERY',
     });
   }
+
   note.status = 'POSTED';
   await noteRepository.save(note);
   return note;
