@@ -1,5 +1,6 @@
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const purchaseService = require('@/services/purchaseService');
+const schema = require('./purchaseSchemaValidate');
 
 const list = async (req, res) => {
   const purchases = await purchaseService.list();
@@ -25,7 +26,15 @@ const read = async (req, res) => {
 };
 
 const create = async (req, res) => {
-  const purchase = await purchaseService.create(req.body);
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: error.details[0]?.message,
+    });
+  }
+  const purchase = await purchaseService.create(value);
   return res.status(200).json({
     success: true,
     result: addId(purchase),
@@ -34,9 +43,17 @@ const create = async (req, res) => {
 };
 
 const update = async (req, res) => {
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: error.details[0]?.message,
+    });
+  }
   const purchase = await purchaseService.update(
     parseInt(req.params.id, 10),
-    req.body
+    value
   );
   if (!purchase) {
     return res
