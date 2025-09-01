@@ -1,6 +1,78 @@
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
+const { addId, hasColumn } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const { AppDataSource } = require('@/typeorm-data-source');
+const schema = require('./schemaValidate');
 
 const repository = AppDataSource.getRepository('Expense');
 
-module.exports = createCRUDController(repository);
+const methods = createCRUDController(repository);
+
+methods.create = async (req, res) => {
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: error.details[0]?.message,
+    });
+  }
+  try {
+    if (hasColumn(repository, 'removed') && value.removed === undefined) {
+      value.removed = false;
+    }
+    const entity = repository.create({ ...value });
+    const result = await repository.save(entity);
+    return res.status(200).json({
+      success: true,
+      result: addId(result),
+      message: 'Successfully Created the document in Model ',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      result: null,
+      message: error.message,
+    });
+  }
+};
+
+methods.update = async (req, res) => {
+  const { error, value } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: error.details[0]?.message,
+    });
+  }
+  try {
+    if (hasColumn(repository, 'removed') && value.removed === undefined) {
+      value.removed = false;
+    }
+    const where = { id: req.params.id };
+    if (hasColumn(repository, 'removed')) where.removed = false;
+    let entity = await repository.findOne({ where });
+    if (!entity) {
+      return res.status(404).json({
+        success: false,
+        result: null,
+        message: 'No document found ',
+      });
+    }
+    repository.merge(entity, value);
+    const result = await repository.save(entity);
+    return res.status(200).json({
+      success: true,
+      result: addId(result),
+      message: 'we update this document ',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      result: null,
+      message: error.message,
+    });
+  }
+};
+
+module.exports = methods;
