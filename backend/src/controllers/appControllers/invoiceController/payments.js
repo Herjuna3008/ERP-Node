@@ -2,6 +2,7 @@ const { AppDataSource } = require('@/typeorm-data-source');
 const PaymentRepository = AppDataSource.getRepository('Payment');
 const InvoiceRepository = AppDataSource.getRepository('Invoice');
 const { updateInvoicePayment } = require('@/services/invoiceService');
+const { calculate } = require('@/helpers');
 
 const payments = async (req, res) => {
   const invoiceId = parseInt(req.params.id, 10);
@@ -11,6 +12,28 @@ const payments = async (req, res) => {
       success: false,
       result: null,
       message: 'Invoice not found',
+    });
+  }
+
+  const { amount } = req.body;
+  const maxAmount = calculate.sub(
+    calculate.sub(invoice.total, invoice.discount || 0),
+    invoice.credit || 0
+  );
+
+  if (amount <= 0) {
+    return res.status(202).json({
+      success: false,
+      result: null,
+      message: `The minimum amount should be greater than 0`,
+    });
+  }
+
+  if (amount > maxAmount) {
+    return res.status(202).json({
+      success: false,
+      result: null,
+      message: `The Max Amount you can add is ${maxAmount}`,
     });
   }
 

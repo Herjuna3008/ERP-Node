@@ -1,6 +1,6 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Payment');
-const Invoice = AppDataSource.getRepository('Invoice');
+const { updateInvoicePayment } = require('@/services/invoiceService');
 
 const remove = async (req, res) => {
   // Find document by id and updates with the required fields
@@ -16,9 +16,7 @@ const remove = async (req, res) => {
     });
   }
 
-  const { id: paymentId, amount: previousAmount } = previousPayment;
-  const invoice = await Invoice.findOne({ where: { id: previousPayment.invoice } });
-  const { id: invoiceId, total, discount, credit: previousCredit } = invoice;
+  const invoiceId = previousPayment.invoice;
 
   // Find the document by id and delete it
   let updates = {
@@ -27,24 +25,14 @@ const remove = async (req, res) => {
   // Find the document by id and delete it
   let entity = await Model.findOne({ where: { id: req.params.id, removed: false } });
   Object.assign(entity, updates);
-  const result = await Model.save(entity);
+  const payment = await Model.save(entity);
   // If no results found, return document not found
 
-  let paymentStatus =
-    total - discount === previousCredit - previousAmount
-      ? 'PAID'
-      : previousCredit - previousAmount > 0
-      ? 'PARTIAL'
-      : 'UNPAID';
-
-  invoice.payment = (invoice.payment || []).filter((p) => p !== paymentId);
-  invoice.credit = previousCredit - previousAmount;
-  invoice.paymentStatus = paymentStatus;
-  await Invoice.save(invoice);
+  const updatedInvoice = await updateInvoicePayment(invoiceId);
 
   return res.status(200).json({
     success: true,
-    result,
+    result: { payment, invoice: updatedInvoice },
     message: 'Successfully Deleted the document ',
   });
 };
