@@ -34,6 +34,7 @@ const decreaseStock = async ({ productId, quantity, refId, type = 'DELIVERY' }) 
   const product = await productRepository.findOne({ where: { id: productId } });
   if (!product) return null;
 
+  const cost = Number(product.averageCost || 0);
   product.stock = (product.stock || 0) - quantity;
   await productRepository.save(product);
 
@@ -42,6 +43,7 @@ const decreaseStock = async ({ productId, quantity, refId, type = 'DELIVERY' }) 
     quantity: -quantity,
     type,
     ref: refId,
+    cost,
   });
   await ledgerRepository.save(ledger);
   return product;
