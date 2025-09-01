@@ -29,7 +29,6 @@ const login = async (req, res, { userModel }) => {
 
   const user = await UserRepository.findOne({ where: { email: email, removed: false } });
 
-  console.log(user);
   if (!user)
     return res.status(404).json({
       success: false,
