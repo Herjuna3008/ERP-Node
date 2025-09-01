@@ -1,9 +1,11 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const { decreaseStock } = require('@/utils/stock');
+const { readBySettingKey, increaseBySettingKey } = require('@/middlewares/settings');
 
 const noteRepository = AppDataSource.getRepository('DeliveryNote');
 const itemRepository = AppDataSource.getRepository('DeliveryItem');
 const invoiceRepository = AppDataSource.getRepository('Invoice');
+const clientRepository = AppDataSource.getRepository('Client');
 
 const create = async (data) => {
   const { client, date, items = [], notes } = data;
@@ -61,6 +63,7 @@ const generateInvoice = async (id, adminId) => {
     where: { deliveryNote: id },
     relations: ['product'],
   });
+
   const invoiceItems = items.map((i) => {
     const price = Number(i.product?.price || 0);
     return {
@@ -71,11 +74,24 @@ const generateInvoice = async (id, adminId) => {
     };
   });
   const subTotal = invoiceItems.reduce((s, i) => s + i.total, 0);
+
+  // generate next invoice number/year
+  const lastNumberSetting = await readBySettingKey({ settingKey: 'last_invoice_number' });
+  const number = (lastNumberSetting?.settingValue || 0) + 1;
+  const year = new Date().getFullYear();
+
+  // compute expired date based on client term
+  const client = await clientRepository.findOne({ where: { id: note.client, removed: false } });
+  const term = client?.defaultTerm || client?.term || 0;
+  const date = new Date();
+  const expiredDate = new Date(date);
+  expiredDate.setDate(expiredDate.getDate() + term);
+
   const invoiceData = {
-    number: 0,
-    year: new Date().getFullYear(),
-    date: new Date(),
-    expiredDate: new Date(),
+    number,
+    year,
+    date,
+    expiredDate,
     client: note.client,
     items: invoiceItems,
     taxRate: 0,
@@ -88,10 +104,19 @@ const generateInvoice = async (id, adminId) => {
     paymentStatus: 'UNPAID',
     credit: 0,
   };
+
   const invoice = await invoiceRepository.save(
     invoiceRepository.create(invoiceData)
   );
-  return { invoiceId: invoice.id };
+
+  // persist new invoice number
+  increaseBySettingKey({ settingKey: 'last_invoice_number' });
+
+  note.status = 'INVOICED';
+  note.invoiceId = invoice.id;
+  await noteRepository.save(note);
+
+  return invoice;
 };
 
 module.exports = { create, post, generateInvoice };
