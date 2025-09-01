@@ -34,7 +34,7 @@ const convertQuoteToInvoice = async (id, adminId) => {
     discount: quote.discount,
     notes: quote.notes,
     createdBy: adminId,
-    paymentStatus: 'unpaid',
+    paymentStatus: 'UNPAID',
     credit: 0,
   };
 

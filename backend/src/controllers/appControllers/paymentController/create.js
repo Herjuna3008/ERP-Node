@@ -48,10 +48,10 @@ const create = async (req, res) => {
 
   let paymentStatus =
     calculate.sub(total, discount) === calculate.add(credit, amount)
-      ? 'paid'
+      ? 'PAID'
       : calculate.add(credit, amount) > 0
-      ? 'partially'
-      : 'unpaid';
+      ? 'PARTIAL'
+      : 'UNPAID';
 
   currentInvoice.payment = [...(currentInvoice.payment || []), paymentId];
   currentInvoice.credit = credit + amount;

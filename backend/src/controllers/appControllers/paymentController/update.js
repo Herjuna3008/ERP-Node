@@ -36,10 +36,10 @@ const update = async (req, res) => {
 
   let paymentStatus =
     calculate.sub(total, discount) === calculate.add(previousCredit, changedAmount)
-      ? 'paid'
+      ? 'PAID'
       : calculate.add(previousCredit, changedAmount) > 0
-      ? 'partially'
-      : 'unpaid';
+      ? 'PARTIAL'
+      : 'UNPAID';
 
   const updatedDate = new Date();
   const updates = {

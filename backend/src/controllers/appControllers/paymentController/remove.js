@@ -32,10 +32,10 @@ const remove = async (req, res) => {
 
   let paymentStatus =
     total - discount === previousCredit - previousAmount
-      ? 'paid'
+      ? 'PAID'
       : previousCredit - previousAmount > 0
-      ? 'partially'
-      : 'unpaid';
+      ? 'PARTIAL'
+      : 'UNPAID';
 
   invoice.payment = (invoice.payment || []).filter((p) => p !== paymentId);
   invoice.credit = previousCredit - previousAmount;

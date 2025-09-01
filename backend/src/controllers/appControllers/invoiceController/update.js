@@ -61,7 +61,7 @@ const update = async (req, res) => {
   // Find document by id and updates with the required fields
 
   let paymentStatus =
-    calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
+    calculate.sub(total, discount) === credit ? 'PAID' : credit > 0 ? 'PARTIAL' : 'UNPAID';
   body['paymentStatus'] = paymentStatus;
 
   Model.merge(previousInvoice, body);
