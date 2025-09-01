@@ -8,7 +8,13 @@ export default function ProductForm() {
       <Form.Item
         label="SKU"
         name="sku"
-        rules={[{ required: true, message: 'SKU is required' }]}
+        rules={[
+          { required: true, message: 'SKU is required' },
+          {
+            pattern: /^[A-Za-z0-9_-]+$/,
+            message: 'SKU must be alphanumeric',
+          },
+        ]}
       >
         <Input />
       </Form.Item>
@@ -23,7 +29,10 @@ export default function ProductForm() {
         label="Price"
         name="price"
         initialValue={0}
-        rules={[{ required: true, message: 'Price is required' }]}
+        rules={[
+          { required: true, message: 'Price is required' },
+          { type: 'number', min: 0, message: 'Price must be at least 0' },
+        ]}
       >
         <InputNumber style={{ width: '100%' }} min={0} />
       </Form.Item>
@@ -31,7 +40,10 @@ export default function ProductForm() {
         label="Stock"
         name="stock"
         initialValue={0}
-        rules={[{ required: true, message: 'Stock is required' }]}
+        rules={[
+          { required: true, message: 'Stock is required' },
+          { type: 'number', min: 0, message: 'Stock must be at least 0' },
+        ]}
       >
         <InputNumber style={{ width: '100%' }} min={0} />
       </Form.Item>
@@ -39,7 +51,10 @@ export default function ProductForm() {
         label="Min Stock"
         name="minStock"
         initialValue={0}
-        rules={[{ required: true, message: 'Min stock is required' }]}
+        rules={[
+          { required: true, message: 'Min stock is required' },
+          { type: 'number', min: 0, message: 'Min stock must be at least 0' },
+        ]}
       >
         <InputNumber style={{ width: '100%' }} min={0} />
       </Form.Item>
@@ -47,7 +62,10 @@ export default function ProductForm() {
         label="Average Cost"
         name="averageCost"
         initialValue={0}
-        rules={[{ required: true, message: 'Average cost is required' }]}
+        rules={[
+          { required: true, message: 'Average cost is required' },
+          { type: 'number', min: 0, message: 'Average cost must be at least 0' },
+        ]}
       >
         <InputNumber style={{ width: '100%' }} min={0} />
       </Form.Item>
