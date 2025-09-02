@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Table, DatePicker, Select, Space, Card } from 'antd';
+import { Table, DatePicker, Select, Space, Card, Badge } from 'antd';
 import dayjs from 'dayjs';
 import { request } from '@/request';
 import { ErpLayout } from '@/layout';
@@ -65,7 +65,16 @@ export default function StockLedgerDataTableModule() {
       dataIndex: 'created',
       render: (d) => dayjs(d).format('YYYY-MM-DD'),
     },
-    { title: 'Product', dataIndex: 'productName' },
+    {
+      title: 'Product',
+      dataIndex: 'productName',
+      render: (text, record) =>
+        record.product?.stock < record.product?.minStock ? (
+          <Badge status="warning" text={text} />
+        ) : (
+          text
+        ),
+    },
     { title: 'Type', dataIndex: 'type' },
     { title: 'Qty In', dataIndex: 'qtyIn' },
     { title: 'Qty Out', dataIndex: 'qtyOut' },
