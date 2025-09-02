@@ -1,10 +1,10 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { Card, Table } from 'antd';
+import { Card, Table, Tabs } from 'antd';
 import { Link } from 'react-router-dom';
 import useLanguage from '@/locale/useLanguage';
 import { useDate } from '@/settings';
-import { PayrollDataTableModule } from '@/modules/PayrollModule';
+import { PayrollDataTableModule, CreatePayrollModule } from '@/modules/PayrollModule';
 import { request } from '@/request';
 
 export default function Payroll() {
@@ -41,6 +41,19 @@ export default function Payroll() {
 
   const config = { entity, ...Labels, dataTableColumns };
 
+  const items = [
+    {
+      key: 'list',
+      label: translate('payroll_list'),
+      children: <PayrollDataTableModule config={config} />,
+    },
+    {
+      key: 'create',
+      label: translate('add_new_payroll'),
+      children: <CreatePayrollModule />,
+    },
+  ];
+
   return (
     <>
       {summary.length > 0 && (
@@ -65,7 +78,7 @@ export default function Payroll() {
           />
         </Card>
       )}
-      <PayrollDataTableModule config={config} />
+      <Tabs items={items} />
     </>
   );
 }

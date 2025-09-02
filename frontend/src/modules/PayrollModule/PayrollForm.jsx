@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { Form, Input, InputNumber, Button, DatePicker } from 'antd';
 import SelectAsync from '@/components/SelectAsync';
+import CategorySelect from '@/components/CategorySelect';
 import useLanguage from '@/locale/useLanguage';
 import { useDate } from '@/settings';
 
@@ -48,7 +49,7 @@ export default function PayrollForm({ onSubmit }) {
         label={translate('expense_category')}
         rules={[{ required: true }]}
       >
-        <SelectAsync entity="expenseCategory" displayLabels={['name']} />
+        <CategorySelect />
       </Form.Item>
 
       <Form.Item name="description" label={translate('Description')}>
