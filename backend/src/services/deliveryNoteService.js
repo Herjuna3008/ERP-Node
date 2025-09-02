@@ -1,6 +1,7 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const { decreaseStock } = require('@/utils/stock');
 const { readBySettingKey, increaseBySettingKey } = require('@/middlewares/settings');
+const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 
 const noteRepository = AppDataSource.getRepository('DeliveryNote');
 const itemRepository = AppDataSource.getRepository('DeliveryItem');
@@ -119,4 +120,38 @@ const generateInvoice = async (id, adminId) => {
   return invoice;
 };
 
-module.exports = { create, post, generateInvoice };
+const read = async (id) => {
+  const note = await noteRepository.findOne({ where: { id } });
+  if (!note) return null;
+  const items = await itemRepository.find({
+    where: { deliveryNote: id },
+    relations: ['product'],
+  });
+  const mappedItems = addId(items).map((i) => ({
+    ...i,
+    product: addId(i.product),
+  }));
+  return { ...addId(note), items: mappedItems };
+};
+
+const update = async (id, data) => {
+  const note = await noteRepository.findOne({ where: { id } });
+  if (!note) return null;
+  const { client, date, items = [], notes } = data;
+  note.client = client;
+  note.date = date;
+  note.notes = notes;
+  await noteRepository.save(note);
+  await itemRepository.delete({ deliveryNote: id });
+  for (const item of items) {
+    const entity = itemRepository.create({
+      deliveryNote: id,
+      product: item.product,
+      quantity: item.quantity,
+    });
+    await itemRepository.save(entity);
+  }
+  return read(id);
+};
+
+module.exports = { create, post, generateInvoice, read, update };
