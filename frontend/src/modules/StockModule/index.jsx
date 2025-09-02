@@ -1,24 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import LowStockAlert from './LowStockAlert';
 import StockAdjustmentForm from './StockAdjustmentForm';
 
 const StockModule = () => {
   const [lowStocks, setLowStocks] = useState([]);
 
-  useEffect(() => {
-    const fetchLowStocks = async () => {
-      try {
-        const res = await fetch('/api/stocks/low');
-        const json = await res.json();
-        if (json.success) {
-          setLowStocks(json.result);
-        }
-      } catch (err) {
-        console.error(err);
+  const fetchLowStocks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/stocks/low');
+      const json = await res.json();
+      if (json.success) {
+        setLowStocks(json.result);
       }
-    };
-    fetchLowStocks();
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLowStocks();
+  }, [fetchLowStocks]);
+
+  useEffect(() => {
+    window.addEventListener('stockUpdate', fetchLowStocks);
+    return () => window.removeEventListener('stockUpdate', fetchLowStocks);
+  }, [fetchLowStocks]);
 
   const handleAdjust = async (data) => {
     try {

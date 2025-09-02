@@ -7,6 +7,7 @@ import PurchaseForm from '../PurchaseForm';
 import useLanguage from '@/locale/useLanguage';
 import calculate from '@/utils/calculate';
 import { useState } from 'react';
+import { request } from '@/request';
 
 export default function CreatePurchaseModule({ config }) {
   const translate = useLanguage();
@@ -23,11 +24,8 @@ export default function CreatePurchaseModule({ config }) {
       items: values.items?.map((i) => ({ product: i.product, quantity: i.quantity, cost: i.cost })),
     };
     try {
-      await fetch('/api/purchases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      await request.post({ entity: 'purchases', jsonData: payload });
+      window.dispatchEvent(new Event('stockUpdate'));
       navigate(`/${entity}`);
     } catch (err) {
       console.error(err);
