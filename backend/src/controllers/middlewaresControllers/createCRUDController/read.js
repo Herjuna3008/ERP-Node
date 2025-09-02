@@ -6,7 +6,8 @@ const read = async (repository, req, res) => {
     if (hasColumn(repository, 'removed')) where.removed = false;
     const result = await repository.findOne({ where });
     if (!result) {
-      return res.status(404).json({
+      // Return a 200 response with a friendly message instead of 404
+      return res.status(200).json({
         success: false,
         result: null,
         message: 'No document found ',

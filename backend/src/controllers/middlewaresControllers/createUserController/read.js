@@ -6,15 +6,15 @@ const read = async (userModel, req, res) => {
   const tmpResult = await User.findOne({
     where: { id: req.params.id, removed: false },
   });
-  // If no results found, return document not found
+  // If no results found, return a successful response with an empty result
   if (!tmpResult) {
-    return res.status(404).json({
+    return res.status(200).json({
       success: false,
       result: null,
       message: 'No document found ',
     });
   } else {
-    // Return success resposne
+    // Return success response
     let result = {
       _id: tmpResult.id,
       enabled: tmpResult.enabled,
