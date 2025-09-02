@@ -3,6 +3,7 @@ const { catchErrors } = require('@/handlers/errorHandlers');
 const router = express.Router();
 
 const appControllers = require('@/controllers/appControllers');
+const dashboardController = require('@/controllers/appControllers/dashboardController');
 const { routesList } = require('@/models/utils');
 
 const routerApp = (entity, controller) => {
@@ -41,6 +42,8 @@ const routerApp = (entity, controller) => {
       .get(catchErrors(controller['download']));
   }
 };
+
+router.route('/dashboard/alerts').get(catchErrors(dashboardController.alerts));
 
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];
