@@ -13,7 +13,18 @@ router
   .post(rbac(['owner', 'manager']), catchErrors(expenseController.create));
 
 router
+  .route('/expense')
+  .get(rbac(['owner', 'manager']), catchErrors(expenseController.list))
+  .post(rbac(['owner', 'manager']), catchErrors(expenseController.create));
+
+router
   .route('/expenses/:id')
+  .get(rbac(['owner', 'manager']), catchErrors(expenseController.read))
+  .patch(rbac(['owner', 'manager']), catchErrors(expenseController.update))
+  .delete(rbac(['owner', 'manager']), catchErrors(expenseController.delete));
+
+router
+  .route('/expense/:id')
   .get(rbac(['owner', 'manager']), catchErrors(expenseController.read))
   .patch(rbac(['owner', 'manager']), catchErrors(expenseController.update))
   .delete(rbac(['owner', 'manager']), catchErrors(expenseController.delete));

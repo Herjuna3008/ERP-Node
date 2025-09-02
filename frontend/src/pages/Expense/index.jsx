@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import useLanguage from '@/locale/useLanguage';
 import { useDate } from '@/settings';
-import { ExpenseDataTableModule } from '@/modules/ExpenseModule';
+import { Tabs } from 'antd';
+import { ExpenseDataTableModule, CreateExpenseModule } from '@/modules/ExpenseModule';
 
 export default function Expense() {
   const translate = useLanguage();
@@ -36,5 +37,18 @@ export default function Expense() {
 
   const config = { entity, ...Labels, dataTableColumns, searchConfig };
 
-  return <ExpenseDataTableModule config={config} />;
+  const items = [
+    {
+      key: 'list',
+      label: translate('expense_list'),
+      children: <ExpenseDataTableModule config={config} />,
+    },
+    {
+      key: 'create',
+      label: translate('add_new_expense'),
+      children: <CreateExpenseModule />,
+    },
+  ];
+
+  return <Tabs items={items} />;
 }
