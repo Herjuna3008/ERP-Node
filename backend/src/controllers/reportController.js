@@ -31,20 +31,42 @@ async function handleExport(req, res, data, filename) {
 }
 
 async function summary(req, res) {
-  const sales = await invoiceRepo()
+  const { startDate, endDate } = req.query;
+
+  const invoiceQB = invoiceRepo()
     .createQueryBuilder('invoice')
     .select('SUM(invoice.total)', 'sum')
-    .where('invoice.removed = :removed', { removed: false })
-    .getRawOne();
-  const purchases = await purchaseRepo()
+    .where('invoice.removed = :removed', { removed: false });
+  if (startDate) {
+    invoiceQB.andWhere('invoice.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    invoiceQB.andWhere('invoice.date <= :end', { end: endDate });
+  }
+  const sales = await invoiceQB.getRawOne();
+
+  const purchaseQB = purchaseRepo()
     .createQueryBuilder('purchase')
-    .select('SUM(purchase.total)', 'sum')
-    .getRawOne();
-  const expenses = await expenseRepo()
+    .select('SUM(purchase.total)', 'sum');
+  if (startDate) {
+    purchaseQB.andWhere('purchase.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    purchaseQB.andWhere('purchase.date <= :end', { end: endDate });
+  }
+  const purchases = await purchaseQB.getRawOne();
+
+  const expenseQB = expenseRepo()
     .createQueryBuilder('expense')
     .select('SUM(expense.amount)', 'sum')
-    .where('expense.removed = :removed', { removed: false })
-    .getRawOne();
+    .where('expense.removed = :removed', { removed: false });
+  if (startDate) {
+    expenseQB.andWhere('expense.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    expenseQB.andWhere('expense.date <= :end', { end: endDate });
+  }
+  const expenses = await expenseQB.getRawOne();
 
   const data = {
     sales: Number(sales?.sum || 0),
@@ -79,28 +101,48 @@ async function arAging(req, res) {
 }
 
 async function analytics(req, res) {
-  const sales = await invoiceRepo()
+  const { startDate, endDate } = req.query;
+
+  const salesQB = invoiceRepo()
     .createQueryBuilder('invoice')
     .select("DATE_FORMAT(invoice.date, '%Y-%m')", 'period')
     .addSelect('SUM(invoice.total)', 'total')
-    .where('invoice.removed = :removed', { removed: false })
-    .groupBy('period')
-    .orderBy('period')
-    .getRawMany();
+    .where('invoice.removed = :removed', { removed: false });
+  if (startDate) {
+    salesQB.andWhere('invoice.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    salesQB.andWhere('invoice.date <= :end', { end: endDate });
+  }
+  const sales = await salesQB.groupBy('period').orderBy('period').getRawMany();
 
-  const purchases = await purchaseRepo()
+  const purchaseQB = purchaseRepo()
     .createQueryBuilder('purchase')
     .select("DATE_FORMAT(purchase.date, '%Y-%m')", 'period')
-    .addSelect('SUM(purchase.total)', 'total')
+    .addSelect('SUM(purchase.total)', 'total');
+  if (startDate) {
+    purchaseQB.andWhere('purchase.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    purchaseQB.andWhere('purchase.date <= :end', { end: endDate });
+  }
+  const purchases = await purchaseQB
     .groupBy('period')
     .orderBy('period')
     .getRawMany();
 
-  const expenses = await expenseRepo()
+  const expenseQB = expenseRepo()
     .createQueryBuilder('expense')
     .select("DATE_FORMAT(expense.date, '%Y-%m')", 'period')
     .addSelect('SUM(expense.amount)', 'total')
-    .where('expense.removed = :removed', { removed: false })
+    .where('expense.removed = :removed', { removed: false });
+  if (startDate) {
+    expenseQB.andWhere('expense.date >= :start', { start: startDate });
+  }
+  if (endDate) {
+    expenseQB.andWhere('expense.date <= :end', { end: endDate });
+  }
+  const expenses = await expenseQB
     .groupBy('period')
     .orderBy('period')
     .getRawMany();

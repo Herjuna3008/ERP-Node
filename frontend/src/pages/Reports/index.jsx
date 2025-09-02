@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Card, Col, Row, Button, Statistic } from 'antd';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, Col, Row, Button, Statistic, DatePicker, Tabs } from 'antd';
 import {
   BarChart,
   Bar,
@@ -11,6 +11,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { ErpLayout } from '@/layout';
+import api from '@/services/api';
+import useLanguage from '@/locale/useLanguage';
+
+const { RangePicker } = DatePicker;
 
 const currencyFormatter = new Intl.NumberFormat('id-ID', {
   style: 'currency',
@@ -18,101 +22,139 @@ const currencyFormatter = new Intl.NumberFormat('id-ID', {
 });
 
 export default function Reports() {
-  const stats = useMemo(
-    () => ({
-      sales: 0,
-      purchases: 0,
-      expenses: 0,
-      arAging: 0,
-    }),
-    []
-  );
+  const translate = useLanguage();
+  const [summary, setSummary] = useState(null);
+  const [analytics, setAnalytics] = useState({ sales: [], purchases: [], expenses: [] });
+  const [range, setRange] = useState([]);
 
-  const chartData = [
-    { month: 'Jan', sales: 0, purchases: 0, expenses: 0 },
-    { month: 'Feb', sales: 0, purchases: 0, expenses: 0 },
-    { month: 'Mar', sales: 0, purchases: 0, expenses: 0 },
-  ];
+  const fetchData = () => {
+    const params = [];
+    if (range && range.length === 2) {
+      params.push(`startDate=${range[0].format('YYYY-MM-DD')}`);
+      params.push(`endDate=${range[1].format('YYYY-MM-DD')}`);
+    }
+    const query = params.length ? `?${params.join('&')}` : '';
+    api.get({ entity: `/reports/summary${query}` }).then((res) => setSummary(res));
+    api.get({ entity: `/reports/analytics${query}` }).then((res) => setAnalytics(res));
+  };
 
-  const exportPDF = () => window.print();
+  useEffect(() => {
+    fetchData();
+  }, [range]);
 
-  const exportXLSX = () => {
-    const rows = [
-      ['Metric', 'Amount'],
-      ['Penjualan', stats.sales],
-      ['Pembelian', stats.purchases],
-      ['Pengeluaran', stats.expenses],
-      ['AR Aging', stats.arAging],
-    ];
-    const csvContent = rows.map((e) => e.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'report.xlsx');
-    link.click();
+  const chartData = useMemo(() => {
+    const periods = new Set();
+    analytics.sales.forEach((i) => periods.add(i.period));
+    analytics.purchases.forEach((i) => periods.add(i.period));
+    analytics.expenses.forEach((i) => periods.add(i.period));
+    return Array.from(periods)
+      .sort()
+      .map((p) => ({
+        period: p,
+        sales: Number(analytics.sales.find((i) => i.period === p)?.total || 0),
+        purchases: Number(analytics.purchases.find((i) => i.period === p)?.total || 0),
+        expenses: Number(analytics.expenses.find((i) => i.period === p)?.total || 0),
+      }));
+  }, [analytics]);
+
+  const exportFile = (format) => {
+    const params = new URLSearchParams();
+    if (range && range.length === 2) {
+      params.append('startDate', range[0].format('YYYY-MM-DD'));
+      params.append('endDate', range[1].format('YYYY-MM-DD'));
+    }
+    params.append('format', format);
+    window.open(`/reports/summary?${params.toString()}`, '_blank');
   };
 
   return (
     <ErpLayout>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Penjualan"
-              value={stats.sales}
-              formatter={(value) => currencyFormatter.format(value)}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Pembelian"
-              value={stats.purchases}
-              formatter={(value) => currencyFormatter.format(value)}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Pengeluaran"
-              value={stats.expenses}
-              formatter={(value) => currencyFormatter.format(value)}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="AR Aging"
-              value={stats.arAging}
-              formatter={(value) => currencyFormatter.format(value)}
-            />
-          </Card>
-        </Col>
-      </Row>
-      <Card style={{ marginTop: 24 }}>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value) => currencyFormatter.format(value)} />
-            <Legend />
-            <Bar dataKey="sales" fill="#8884d8" name="Penjualan" />
-            <Bar dataKey="purchases" fill="#82ca9d" name="Pembelian" />
-            <Bar dataKey="expenses" fill="#ffc658" name="Pengeluaran" />
-          </BarChart>
-        </ResponsiveContainer>
+      <Card style={{ marginBottom: 16 }}>
+        <RangePicker value={range} onChange={(v) => setRange(v)} />
       </Card>
-      <div style={{ marginTop: 16 }}>
-        <Button type="primary" onClick={exportPDF} style={{ marginRight: 8 }}>
-          Export PDF
-        </Button>
-        <Button onClick={exportXLSX}>Export XLSX</Button>
-      </div>
+      <Tabs
+        defaultActiveKey="summary"
+        items={[
+          {
+            key: 'summary',
+            label: translate('Summary'),
+            children: (
+              <>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12} md={6}>
+                    <Card>
+                      <Statistic
+                        title={translate('Sales')}
+                        value={summary?.sales || 0}
+                        formatter={(value) => currencyFormatter.format(value)}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Card>
+                      <Statistic
+                        title={translate('Purchases')}
+                        value={summary?.purchases || 0}
+                        formatter={(value) => currencyFormatter.format(value)}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Card>
+                      <Statistic
+                        title={translate('Expenses')}
+                        value={summary?.expenses || 0}
+                        formatter={(value) => currencyFormatter.format(value)}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Card>
+                      <Statistic
+                        title={translate('Margin')}
+                        value={summary?.margin || 0}
+                        formatter={(value) => currencyFormatter.format(value)}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+                <div style={{ marginTop: 16 }}>
+                  <Button
+                    type="primary"
+                    onClick={() => exportFile('pdf')}
+                    style={{ marginRight: 8 }}
+                  >
+                    {translate('Export PDF')}
+                  </Button>
+                  <Button onClick={() => exportFile('excel')}>
+                    {translate('Export XLSX')}
+                  </Button>
+                </div>
+              </>
+            ),
+          },
+          {
+            key: 'analytics',
+            label: translate('Analytics'),
+            children: (
+              <Card>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => currencyFormatter.format(value)} />
+                    <Legend />
+                    <Bar dataKey="sales" fill="#8884d8" name={translate('Sales')} />
+                    <Bar dataKey="purchases" fill="#82ca9d" name={translate('Purchases')} />
+                    <Bar dataKey="expenses" fill="#ffc658" name={translate('Expenses')} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            ),
+          },
+        ]}
+      />
     </ErpLayout>
   );
 }
