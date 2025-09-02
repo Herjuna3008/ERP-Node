@@ -5,6 +5,7 @@ import { ArrowLeftOutlined, CloseCircleOutlined, PlusOutlined } from '@ant-desig
 import { useNavigate } from 'react-router-dom';
 import ProductForm from '../ProductForm';
 import useLanguage from '@/locale/useLanguage';
+import { createProduct } from '@/services/product.service';
 
 export default function CreateProductModule({ config }) {
   const translate = useLanguage();
@@ -14,11 +15,7 @@ export default function CreateProductModule({ config }) {
 
   const onFinish = async (values) => {
     try {
-      await fetch(`/api/${entity}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
+      await createProduct(values);
       navigate(`/${entity}`);
     } catch (err) {
       console.error(err);
