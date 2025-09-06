@@ -1,16 +1,16 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Payment');
 const Invoice = AppDataSource.getRepository('Invoice');
-const { updateInvoicePayment } = require('@/services/invoiceService');
+const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
 
 const update = async (req, res) => {
-  if (req.body.amount <= 0) {
+  if (req.body.amount === 0) {
     return res.status(202).json({
       success: false,
       result: null,
-      message: `The minimum amount should be greater than 0`,
+      message: `The Minimum Amount couldn't be 0`,
     });
   }
   // Find document by id and updates with the required fields
@@ -34,6 +34,13 @@ const update = async (req, res) => {
     });
   }
 
+  let paymentStatus =
+    calculate.sub(total, discount) === calculate.add(previousCredit, changedAmount)
+      ? 'PAID'
+      : calculate.add(previousCredit, changedAmount) > 0
+      ? 'PARTIAL'
+      : 'UNPAID';
+
   const updatedDate = new Date();
   const updates = {
     number: req.body.number,
@@ -46,13 +53,15 @@ const update = async (req, res) => {
   };
 
   Model.merge(previousPayment, updates);
-  const payment = await Model.save(previousPayment);
+  const result = await Model.save(previousPayment);
 
-  const updatedInvoice = await updateInvoicePayment(invoiceId);
+  invoiceRecord.credit = previousCredit + changedAmount;
+  invoiceRecord.paymentStatus = paymentStatus;
+  await Invoice.save(invoiceRecord);
 
   return res.status(200).json({
     success: true,
-    result: { payment, invoice: updatedInvoice },
+    result,
     message: 'Successfully updated the Payment ',
   });
 };

@@ -5,7 +5,6 @@ const { calculate } = require('@/helpers');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const schema = require('./schemaValidate');
-const { updateInvoicePayment } = require('@/services/invoiceService');
 
 const create = async (req, res) => {
   let body = req.body;
@@ -43,15 +42,15 @@ const create = async (req, res) => {
   body['total'] = total;
   body['items'] = items;
 
+  let paymentStatus = calculate.sub(total, discount) === 0 ? 'PAID' : 'UNPAID';
+
+  body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;
 
   let result = await Model.save(Model.create(body));
   const fileId = 'invoice-' + result.id + '.pdf';
   result.pdf = fileId;
   const updateResult = await Model.save(result);
-
-  const updatedInvoice = await updateInvoicePayment(updateResult.id);
-
   // Returning successful response
 
   increaseBySettingKey({
@@ -61,7 +60,7 @@ const create = async (req, res) => {
   // Returning successful response
   return res.status(200).json({
     success: true,
-    result: addId(updatedInvoice),
+    result: addId(updateResult),
     message: 'Invoice created successfully',
   });
 };

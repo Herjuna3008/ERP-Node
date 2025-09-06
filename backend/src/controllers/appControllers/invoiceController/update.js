@@ -6,7 +6,6 @@ const custom = require('@/controllers/pdfController');
 const { calculate } = require('@/helpers');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const schema = require('./schemaValidate');
-const { updateInvoicePayment } = require('@/services/invoiceService');
 
 const update = async (req, res) => {
   let body = req.body;
@@ -61,16 +60,18 @@ const update = async (req, res) => {
   }
   // Find document by id and updates with the required fields
 
+  let paymentStatus =
+    calculate.sub(total, discount) === credit ? 'PAID' : credit > 0 ? 'PARTIAL' : 'UNPAID';
+  body['paymentStatus'] = paymentStatus;
+
   Model.merge(previousInvoice, body);
   const result = await Model.save(previousInvoice);
-
-  const updatedInvoice = await updateInvoicePayment(result.id);
 
   // Returning successful response
 
   return res.status(200).json({
     success: true,
-    result: addId(updatedInvoice),
+    result: addId(result),
     message: 'we update this document ',
   });
 };
