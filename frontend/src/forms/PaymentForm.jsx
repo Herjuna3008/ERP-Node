@@ -12,6 +12,10 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
   const { TextArea } = Input;
   const money = useMoney();
   const { dateFormat } = useDate();
+
+  // Prevent new Day.js instances on every render which can cause
+  // infinite re-render loops inside antd Form meta tracking
+  const [defaultDate] = React.useState(() => dayjs().add(30, 'days'));
   return (
     <>
       <Form.Item
@@ -36,7 +40,7 @@ export default function PaymentForm({ maxAmount = null, isUpdateForm = false }) 
             type: 'object',
           },
         ]}
-        initialValue={dayjs().add(30, 'days')}
+        initialValue={defaultDate}
         style={{ width: '100%' }}
       >
         <DatePicker format={dateFormat} style={{ width: '100%' }} />
