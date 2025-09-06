@@ -1,17 +1,17 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const Model = AppDataSource.getRepository('Payment');
 const Invoice = AppDataSource.getRepository('Invoice');
-const { updateInvoicePayment } = require('@/services/invoiceService');
+const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
 
 const create = async (req, res) => {
   // Creating a new document in the collection
-  if (req.body.amount <= 0) {
+  if (req.body.amount === 0) {
     return res.status(202).json({
       success: false,
       result: null,
-      message: `The minimum amount should be greater than 0`,
+      message: `The Minimum Amount couldn't be 0`,
     });
   }
 
@@ -36,18 +36,31 @@ const create = async (req, res) => {
   }
   req.body['createdBy'] = req.admin.id;
 
-  let payment = await Model.save(Model.create(req.body));
+  let result = await Model.save(Model.create(req.body));
 
-  const fileId = 'payment-' + payment.id + '.pdf';
-  payment.pdf = fileId;
-  payment = await Model.save(payment);
+  const fileId = 'payment-' + result.id + '.pdf';
+  result.pdf = fileId;
+  let updatePath = await Model.save(result);
+  // Returning successfull response
 
-  const updatedInvoice = await updateInvoicePayment(payment.invoice);
+  const { id: paymentId, amount } = result;
+  const { id: invoiceId, total, discount, credit } = currentInvoice;
 
-  // Returning successful response
+  let paymentStatus =
+    calculate.sub(total, discount) === calculate.add(credit, amount)
+      ? 'PAID'
+      : calculate.add(credit, amount) > 0
+      ? 'PARTIAL'
+      : 'UNPAID';
+
+  currentInvoice.payment = [...(currentInvoice.payment || []), paymentId];
+  currentInvoice.credit = credit + amount;
+  currentInvoice.paymentStatus = paymentStatus;
+  await Invoice.save(currentInvoice);
+
   return res.status(200).json({
     success: true,
-    result: { payment, invoice: updatedInvoice },
+    result: updatePath,
     message: 'Payment Invoice created successfully',
   });
 };
