@@ -1,43 +1,56 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Input, Button } from 'antd';
+import { useEffect } from 'react';
+import { Form, Input, Button } from 'antd';
 
-const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email().optional(),
-});
+const { TextArea } = Input;
 
-const SupplierForm = ({ onSubmit }) => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '' },
-  });
+export default function SupplierForm({ onSubmit, defaultValues = { name: '', email: '', phone: '', address: '' } }) {
+  const [form] = Form.useForm();
 
-  const submit = (data) => {
-    if (onSubmit) onSubmit(data);
+  useEffect(() => {
+    form.setFieldsValue(defaultValues);
+  }, [defaultValues, form]);
+
+  const submit = (values) => {
+    if (onSubmit) {
+      onSubmit(values);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit(submit)}>
-      <div>
-        <Input placeholder="Name" {...register('name')} />
-        {errors.name && <p>{errors.name.message}</p>}
-      </div>
-      <div>
-        <Input placeholder="Email" {...register('email')} />
-        {errors.email && <p>{errors.email.message}</p>}
-      </div>
-      <Button type="primary" htmlType="submit">
-        Save
-      </Button>
-    </form>
+    <Form form={form} layout="vertical" onFinish={submit}>
+      <Form.Item
+        label="Name"
+        name="name"
+        rules={[{ required: true, message: 'Name is required' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="Email"
+        name="email"
+        rules={[{ type: 'email', message: 'Invalid email' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="Phone"
+        name="phone"
+        rules={[{ required: true, message: 'Phone is required' }]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="Address"
+        name="address"
+        rules={[{ required: true, message: 'Address is required' }]}
+      >
+        <TextArea rows={3} />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          Save
+        </Button>
+      </Form.Item>
+    </Form>
   );
-};
-
-export default SupplierForm;
+}

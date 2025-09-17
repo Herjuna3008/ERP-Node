@@ -23,6 +23,7 @@ import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
 
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import { API_BASE_URL } from '@/config/serverApiConfig';
 
 function AddNewItem({ config }) {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/${entity}/update/${record._id}`);
   };
   const handleDownload = (record) => {
-    window.open(`${DOWNLOAD_BASE_URL}${entity}/${entity}-${record._id}.pdf`, '_blank');
+    window.open(`${API_BASE_URL}${entity}/${record._id}/download`, '_blank');
   };
 
   const handleDelete = (record) => {
@@ -103,6 +104,20 @@ export default function DataTable({ config, extra = [] }) {
   const handleRecordPayment = (record) => {
     dispatch(erp.currentItem({ data: record }));
     navigate(`/invoice/pay/${record._id}`);
+  };
+
+  const handlePost = async (record) => {
+    await fetch(`${API_BASE_URL}${entity}/${record._id}/post`, {
+      method: 'POST',
+    });
+    handelDataTableLoad(pagination);
+  };
+
+  const handleGenerateInvoice = async (record) => {
+    await fetch(`${API_BASE_URL}${entity}/${record._id}/generateInvoice`, {
+      method: 'POST',
+    });
+    handelDataTableLoad(pagination);
   };
 
   dataTableColumns = [
@@ -131,6 +146,12 @@ export default function DataTable({ config, extra = [] }) {
                   break;
                 case 'recordPayment':
                   handleRecordPayment(record);
+                  break;
+                case 'post':
+                  handlePost(record);
+                  break;
+                case 'generateInvoice':
+                  handleGenerateInvoice(record);
                   break;
                 default:
                   break;
@@ -209,7 +230,7 @@ export default function DataTable({ config, extra = [] }) {
         pagination={pagination}
         loading={listIsLoading}
         onChange={handelDataTableLoad}
-        scroll={{ x: true }}
+        scroll={{ x: 'max-content' }}
       />
     </>
   );

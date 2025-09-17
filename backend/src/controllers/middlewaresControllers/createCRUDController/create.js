@@ -1,8 +1,10 @@
-const { addId } = require('./utils');
+const { addId, hasColumn } = require('./utils');
 
 const create = async (repository, req, res) => {
   try {
-    req.body.removed = false;
+    if (hasColumn(repository, 'removed') && req.body.removed === undefined) {
+      req.body.removed = false;
+    }
     const entity = repository.create({ ...req.body });
     const result = await repository.save(entity);
     return res.status(200).json({

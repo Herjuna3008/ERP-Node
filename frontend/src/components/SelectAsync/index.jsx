@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { request } from '@/request';
+import api from '@/services/api';
 import useFetch from '@/hooks/useFetch';
 import { Select, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ const SelectAsync = ({
   const navigate = useNavigate();
 
   const asyncList = () => {
-    return request.list({ entity });
+    return api.list({ entity });
   };
   const { result, isLoading: fetchIsLoading, isSuccess } = useFetch(asyncList);
   useEffect(() => {

@@ -1,4 +1,4 @@
-const { addId } = require('./utils');
+const { addId, hasColumn } = require('./utils');
 
 const remove = async (repository, req, res) => {
   try {
@@ -10,11 +10,19 @@ const remove = async (repository, req, res) => {
         message: 'No document found ',
       });
     }
-    entity.removed = true;
-    const result = await repository.save(entity);
+    if (hasColumn(repository, 'removed')) {
+      entity.removed = true;
+      const result = await repository.save(entity);
+      return res.status(200).json({
+        success: true,
+        result: addId(result),
+        message: 'Successfully Deleted the document ',
+      });
+    }
+    await repository.delete(req.params.id);
     return res.status(200).json({
       success: true,
-      result: addId(result),
+      result: addId(entity),
       message: 'Successfully Deleted the document ',
     });
   } catch (error) {

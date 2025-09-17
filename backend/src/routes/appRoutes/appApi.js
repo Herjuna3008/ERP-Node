@@ -3,6 +3,7 @@ const { catchErrors } = require('@/handlers/errorHandlers');
 const router = express.Router();
 
 const appControllers = require('@/controllers/appControllers');
+const dashboardController = require('@/controllers/appControllers/dashboardController');
 const { routesList } = require('@/models/utils');
 
 const routerApp = (entity, controller) => {
@@ -22,12 +23,27 @@ const routerApp = (entity, controller) => {
 
   if (entity === 'invoice') {
     router.route(`/invoices/:id/payments`).post(catchErrors(controller['payments']));
+    router.route(`/invoice/:id/download`).get(catchErrors(controller['download']));
   }
 
   if (entity === 'quote') {
     router.route(`/quotes/:id/convert`).post(catchErrors(controller['convert']));
   }
+
+  if (entity === 'deliverynote') {
+    router
+      .route(`/deliverynote/:id/post`)
+      .post(catchErrors(controller['post']));
+    router
+      .route(`/deliverynote/:id/generateInvoice`)
+      .post(catchErrors(controller['generateInvoice']));
+    router
+      .route(`/deliverynote/:id/download`)
+      .get(catchErrors(controller['download']));
+  }
 };
+
+router.route('/dashboard/alerts').get(catchErrors(dashboardController.alerts));
 
 routesList.forEach(({ entity, controllerName }) => {
   const controller = appControllers[controllerName];

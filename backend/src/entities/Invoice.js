@@ -24,7 +24,11 @@ module.exports = new EntitySchema({
     credit: { type: 'float', default: 0 },
     discount: { type: 'float', default: 0 },
     payment: { type: 'simple-json', nullable: true },
-    paymentStatus: { type: 'varchar', default: 'UNPAID' },
+    paymentStatus: {
+      type: 'enum',
+      enum: ['PAID', 'UNPAID', 'PARTIAL', 'OVERDUE'],
+      default: 'UNPAID',
+    },
     isOverdue: { type: 'boolean', default: false },
     approved: { type: 'boolean', default: false },
     notes: { type: 'text', nullable: true },

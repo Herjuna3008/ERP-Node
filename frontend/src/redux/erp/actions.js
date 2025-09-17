@@ -1,5 +1,5 @@
 import * as actionTypes from './types';
-import { request } from '@/request';
+import api from '@/services/api';
 
 export const erp = {
   resetState: () => (dispatch) => {
@@ -42,7 +42,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.list({ entity, options });
+      let data = await api.list({ entity, options });
 
       if (data.success === true) {
         const result = {
@@ -75,7 +75,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.create({ entity, jsonData });
+      let data = await api.create({ entity, jsonData });
 
       if (data.success === true) {
         dispatch({
@@ -104,7 +104,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.create({ entity, jsonData });
+      let data = await api.create({ entity, jsonData });
 
       if (data.success === true) {
         dispatch({
@@ -133,7 +133,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.post({ entity: `invoices/${invoiceId}/payments`, jsonData });
+      let data = await api.post({ entity: `invoices/${invoiceId}/payments`, jsonData });
 
       if (data.success === true) {
         dispatch({
@@ -162,7 +162,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.read({ entity, id });
+      let data = await api.read({ entity, id });
 
       if (data.success === true) {
         dispatch({
@@ -191,7 +191,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.update({ entity, id, jsonData });
+      let data = await api.update({ entity, id, jsonData });
 
       if (data.success === true) {
         dispatch({
@@ -225,7 +225,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.delete({ entity, id });
+      let data = await api.remove({ entity, id });
 
       if (data.success === true) {
         dispatch({
@@ -251,7 +251,7 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.search({ entity, options });
+      let data = await api.search({ entity, options });
 
       if (data.success === true) {
         dispatch({
@@ -277,7 +277,7 @@ export const erp = {
         payload: null,
       });
 
-      const data = await request.summary({ entity, options });
+      const data = await api.summary({ entity, options });
 
       if (data.success === true) {
         dispatch({
@@ -303,7 +303,7 @@ export const erp = {
         payload: null,
       });
 
-      const data = await request.mail({ entity, jsonData });
+      const data = await api.mail({ entity, jsonData });
 
       if (data.success === true) {
         dispatch({
@@ -323,6 +323,7 @@ export const erp = {
   convert:
     ({ entity, id }) =>
     async () => {
-      await request.convert({ entity, id });
+      const route = entity.endsWith('s') ? entity : `${entity}s`;
+      await api.convert({ entity: route, id });
     },
 };

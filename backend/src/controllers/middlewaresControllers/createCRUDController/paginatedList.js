@@ -1,4 +1,4 @@
-const { addId } = require('./utils');
+const { addId, hasColumn } = require('./utils');
 
 const paginatedList = async (repository, req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -11,9 +11,12 @@ const paginatedList = async (repository, req, res) => {
   const fieldsArray = req.query.fields ? req.query.fields.split(',') : [];
 
   try {
-    const qb = repository
-      .createQueryBuilder('model')
-      .where('model.removed = :removed', { removed: false });
+    const qb = repository.createQueryBuilder('model');
+    if (hasColumn(repository, 'removed')) {
+      qb.where('model.removed = :removed', { removed: false });
+    } else {
+      qb.where('1 = 1');
+    }
 
     if (filter && equal !== undefined) {
       qb.andWhere(`model.${filter} = :equal`, { equal });
@@ -38,14 +41,13 @@ const paginatedList = async (repository, req, res) => {
         pagination,
         message: 'Successfully found all documents',
       });
-    } else {
-      return res.status(203).json({
-        success: true,
-        result: [],
-        pagination,
-        message: 'Collection is Empty',
-      });
     }
+    return res.status(200).json({
+      success: true,
+      result: [],
+      pagination,
+      message: 'Collection is Empty',
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

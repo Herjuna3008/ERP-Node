@@ -7,8 +7,10 @@ import { selectCreatedItem } from '@/redux/crud/selectors';
 
 import useLanguage from '@/locale/useLanguage';
 
-import { Button, Form } from 'antd';
+import { Button, Form, Grid } from 'antd';
 import Loading from '@/components/Loading';
+
+const { useBreakpoint } = Grid;
 
 export default function CreateForm({ config, formElements, withUpload = false }) {
   let { entity } = config;
@@ -17,6 +19,7 @@ export default function CreateForm({ config, formElements, withUpload = false })
   const { crudContextAction } = useCrudContext();
   const { panel, collapsedBox, readBox } = crudContextAction;
   const [form] = Form.useForm();
+  const screens = useBreakpoint();
   const translate = useLanguage();
   const onSubmit = (fieldsValue) => {
     // Manually trim values before submission
@@ -46,7 +49,13 @@ export default function CreateForm({ config, formElements, withUpload = false })
 
   return (
     <Loading isLoading={isLoading}>
-      <Form form={form} layout="vertical" onFinish={onSubmit}>
+      <Form
+        form={form}
+        layout={screens.md ? 'horizontal' : 'vertical'}
+        labelCol={screens.md ? { span: 8 } : undefined}
+        wrapperCol={screens.md ? { span: 16 } : undefined}
+        onFinish={onSubmit}
+      >
         {formElements}
         <Form.Item>
           <Button type="primary" htmlType="submit">

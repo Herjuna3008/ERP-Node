@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { Tag, Row, Col } from 'antd';
+import { Tag, Row, Col, Alert } from 'antd';
 import useLanguage from '@/locale/useLanguage';
 
 import { useMoney } from '@/settings';
 
-import { request } from '@/request';
+import api from '@/services/api';
 import useFetch from '@/hooks/useFetch';
 import useOnFetch from '@/hooks/useOnFetch';
 
@@ -24,7 +24,7 @@ export default function DashboardModule() {
   const money_format_settings = useSelector(selectMoneyFormat);
 
   const getStatsData = async ({ entity, currency }) => {
-    return await request.summary({
+    return await api.summary({
       entity,
       options: { currency },
     });
@@ -45,8 +45,10 @@ export default function DashboardModule() {
   } = useOnFetch();
 
   const { result: clientResult, isLoading: clientLoading } = useFetch(() =>
-    request.summary({ entity: 'client' })
+    api.summary({ entity: 'client' })
   );
+
+  const { result: alerts } = useFetch(() => api.get({ entity: 'dashboard/alerts' }));
 
   useEffect(() => {
     const currency = money_format_settings.default_currency_code || null;
@@ -127,6 +129,22 @@ export default function DashboardModule() {
   if (money_format_settings) {
     return (
       <>
+        {alerts?.lowStockProducts?.length > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            message={`${alerts.lowStockProducts.length} product(s) below minimum stock`}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+        {alerts?.overdueInvoices?.length > 0 && (
+          <Alert
+            type="error"
+            showIcon
+            message={`${alerts.overdueInvoices.length} invoice(s) overdue`}
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <Row gutter={[32, 32]}>
           <SummaryCard
             title={translate('Invoices')}

@@ -1,5 +1,5 @@
 import * as actionTypes from './types';
-import { request } from '@/request';
+import api from '@/services/api';
 
 const dispatchSettingsData = (datas) => {
   const settingsCategory = {};
@@ -34,7 +34,7 @@ export const settingsAction = {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
       });
-      let data = await request.patch({
+      let data = await api.patch({
         entity: entity + '/updateBySettingKey/' + settingKey,
         jsonData,
       });
@@ -44,7 +44,7 @@ export const settingsAction = {
           type: actionTypes.REQUEST_LOADING,
         });
 
-        let data = await request.listAll({ entity });
+        let data = await api.listAll({ entity });
 
         if (data.success === true) {
           const payload = dispatchSettingsData(data.result);
@@ -74,7 +74,7 @@ export const settingsAction = {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
       });
-      let data = await request.patch({
+      let data = await api.patch({
         entity: entity + '/updateManySetting',
         jsonData,
       });
@@ -84,7 +84,7 @@ export const settingsAction = {
           type: actionTypes.REQUEST_LOADING,
         });
 
-        let data = await request.listAll({ entity });
+        let data = await api.listAll({ entity });
 
         if (data.success === true) {
           const payload = dispatchSettingsData(data.result);
@@ -115,7 +115,7 @@ export const settingsAction = {
         type: actionTypes.REQUEST_LOADING,
       });
 
-      let data = await request.listAll({ entity });
+      let data = await api.listAll({ entity });
 
       if (data.success === true) {
         const payload = dispatchSettingsData(data.result);
@@ -138,7 +138,7 @@ export const settingsAction = {
         type: actionTypes.REQUEST_LOADING,
       });
 
-      let data = await request.upload({
+      let data = await api.upload({
         entity: entity,
         id: settingKey,
         jsonData,
@@ -149,7 +149,7 @@ export const settingsAction = {
           type: actionTypes.REQUEST_LOADING,
         });
 
-        let data = await request.listAll({ entity });
+        let data = await api.listAll({ entity });
 
         if (data.success === true) {
           const payload = dispatchSettingsData(data.result);

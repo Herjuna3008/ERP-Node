@@ -1,11 +1,13 @@
-const { addId } = require('./utils');
+const { addId, hasColumn } = require('./utils');
 
 const update = async (repository, req, res) => {
   try {
-    req.body.removed = false;
-    let entity = await repository.findOne({
-      where: { id: req.params.id, removed: false },
-    });
+    if (hasColumn(repository, 'removed') && req.body.removed === undefined) {
+      req.body.removed = false;
+    }
+    const where = { id: req.params.id };
+    if (hasColumn(repository, 'removed')) where.removed = false;
+    let entity = await repository.findOne({ where });
     if (!entity) {
       return res.status(404).json({
         success: false,
