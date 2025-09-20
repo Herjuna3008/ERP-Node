@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
 const Client = require('./entities/Client');
 const Invoice = require('./entities/Invoice');
+const InvoiceItem = require('./entities/InvoiceItem');
 const Payment = require('./entities/Payment');
 const PaymentMode = require('./entities/PaymentMode');
 const Quote = require('./entities/Quote');
@@ -17,6 +18,16 @@ const AdminPassword = require('./entities/AdminPassword');
 const Setting = require('./entities/Setting');
 const Product = require('./entities/Product');
 const Supplier = require('./entities/Supplier');
+const PurchaseInvoice = require('./entities/PurchaseInvoice');
+const PurchaseItem = require('./entities/PurchaseItem');
+const StockLedger = require('./entities/StockLedger');
+const ExpenseCategory = require('./entities/ExpenseCategory');
+const Expense = require('./entities/Expense');
+
+const Init1710000000000 = require('./migrations/1710000000000-Init');
+const AddInventoryFieldsToProducts1716000000001 = require('./migrations/1716000000001-AddInventoryFieldsToProducts');
+const EnhanceInvoiceDiscounts1716000000002 = require('./migrations/1716000000002-EnhanceInvoiceDiscounts');
+const CreatePurchaseAndExpenseTables1716000000003 = require('./migrations/1716000000003-CreatePurchaseAndExpenseTables');
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -25,9 +36,33 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'erp',
-  synchronize: true,
+  synchronize: false,
   logging: false,
-  entities: [Client, Invoice, Payment, PaymentMode, Quote, Taxes, Admin, AdminPassword, Setting, Product, Supplier],
+  entities: [
+    Client,
+    Invoice,
+    InvoiceItem,
+    Payment,
+    PaymentMode,
+    Quote,
+    Taxes,
+    Admin,
+    AdminPassword,
+    Setting,
+    Product,
+    Supplier,
+    PurchaseInvoice,
+    PurchaseItem,
+    StockLedger,
+    ExpenseCategory,
+    Expense,
+  ],
+  migrations: [
+    Init1710000000000,
+    AddInventoryFieldsToProducts1716000000001,
+    EnhanceInvoiceDiscounts1716000000002,
+    CreatePurchaseAndExpenseTables1716000000003,
+  ],
 });
 
 module.exports = { AppDataSource };
