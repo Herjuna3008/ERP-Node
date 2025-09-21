@@ -17,6 +17,11 @@ const AdminPassword = require('./entities/AdminPassword');
 const Setting = require('./entities/Setting');
 const Product = require('./entities/Product');
 const Supplier = require('./entities/Supplier');
+const PurchaseInvoice = require('./entities/PurchaseInvoice');
+const PurchaseInvoiceItem = require('./entities/PurchaseInvoiceItem');
+const ExpenseCategory = require('./entities/ExpenseCategory');
+const Expense = require('./entities/Expense');
+const StockLedger = require('./entities/StockLedger');
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -27,7 +32,24 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'erp',
   synchronize: true,
   logging: false,
-  entities: [Client, Invoice, Payment, PaymentMode, Quote, Taxes, Admin, AdminPassword, Setting, Product, Supplier],
+  entities: [
+    Client,
+    Invoice,
+    Payment,
+    PaymentMode,
+    Quote,
+    Taxes,
+    Admin,
+    AdminPassword,
+    Setting,
+    Product,
+    Supplier,
+    PurchaseInvoice,
+    PurchaseInvoiceItem,
+    ExpenseCategory,
+    Expense,
+    StockLedger,
+  ],
 });
 
 module.exports = { AppDataSource };
