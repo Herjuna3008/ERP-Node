@@ -34,4 +34,12 @@ routesList.forEach(({ entity, controllerName }) => {
   routerApp(entity, controller);
 });
 
+if (appControllers.purchaseInvoiceController?.stockToBuy) {
+  router.route('/purchaseinvoice/stock-to-buy').get(catchErrors(appControllers.purchaseInvoiceController.stockToBuy));
+}
+
+if (appControllers.recapController?.generate) {
+  router.route('/reports/recap').get(catchErrors(appControllers.recapController.generate));
+}
+
 module.exports = router;

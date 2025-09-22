@@ -19,15 +19,10 @@ const Setting = require('./entities/Setting');
 const Product = require('./entities/Product');
 const Supplier = require('./entities/Supplier');
 const PurchaseInvoice = require('./entities/PurchaseInvoice');
-const PurchaseItem = require('./entities/PurchaseItem');
-const StockLedger = require('./entities/StockLedger');
+const PurchaseInvoiceItem = require('./entities/PurchaseInvoiceItem');
 const ExpenseCategory = require('./entities/ExpenseCategory');
 const Expense = require('./entities/Expense');
-
-const Init1710000000000 = require('./migrations/1710000000000-Init');
-const AddInventoryFieldsToProducts1716000000001 = require('./migrations/1716000000001-AddInventoryFieldsToProducts');
-const EnhanceInvoiceDiscounts1716000000002 = require('./migrations/1716000000002-EnhanceInvoiceDiscounts');
-const CreatePurchaseAndExpenseTables1716000000003 = require('./migrations/1716000000003-CreatePurchaseAndExpenseTables');
+const StockLedger = require('./entities/StockLedger');
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -41,7 +36,6 @@ const AppDataSource = new DataSource({
   entities: [
     Client,
     Invoice,
-    InvoiceItem,
     Payment,
     PaymentMode,
     Quote,
@@ -52,16 +46,10 @@ const AppDataSource = new DataSource({
     Product,
     Supplier,
     PurchaseInvoice,
-    PurchaseItem,
-    StockLedger,
+    PurchaseInvoiceItem,
     ExpenseCategory,
     Expense,
-  ],
-  migrations: [
-    Init1710000000000,
-    AddInventoryFieldsToProducts1716000000001,
-    EnhanceInvoiceDiscounts1716000000002,
-    CreatePurchaseAndExpenseTables1716000000003,
+    StockLedger,
   ],
 });
 

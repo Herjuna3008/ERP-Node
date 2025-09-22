@@ -5,8 +5,9 @@ module.exports = new EntitySchema({
   tableName: 'expense_categories',
   columns: {
     id: { primary: true, type: 'int', generated: true },
-    name: { type: 'varchar', length: 150 },
+    name: { type: 'varchar', length: 191 },
     description: { type: 'text', nullable: true },
+    removed: { type: 'boolean', default: false },
     created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
     updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
   },
