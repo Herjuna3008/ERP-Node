@@ -1,51 +1,36 @@
 import { lazy } from 'react';
-
 import { Navigate } from 'react-router-dom';
 
 const Logout = lazy(() => import('@/pages/Logout.jsx'));
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'));
 
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Dashboard = lazy(() => import('@/pages/Dashboard.jsx'));
 const Customer = lazy(() => import('@/pages/Customer'));
 const Invoice = lazy(() => import('@/pages/Invoice'));
-const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate'));
-
-const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead'));
-const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate'));
-const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment'));
-const Quote = lazy(() => import('@/pages/Quote/index'));
-const QuoteCreate = lazy(() => import('@/pages/Quote/QuoteCreate'));
-const QuoteRead = lazy(() => import('@/pages/Quote/QuoteRead'));
-const QuoteUpdate = lazy(() => import('@/pages/Quote/QuoteUpdate'));
-const Payment = lazy(() => import('@/pages/Payment/index'));
-const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
-const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
-const Products = lazy(() => import('@/pages/Products'));
-const Suppliers = lazy(() => import('@/pages/Suppliers'));
-const PurchaseInvoices = lazy(() => import('@/pages/PurchaseInvoices'));
-const StockLedger = lazy(() => import('@/pages/StockLedger'));
-const ExpenseCategories = lazy(() => import('@/pages/ExpenseCategories'));
-const Expenses = lazy(() => import('@/pages/Expenses'));
-const StockToBuy = lazy(() => import('@/pages/PurchaseInvoices/StockToBuy'));
-const Recap = lazy(() => import('@/pages/Reports/Recap'));
-
-const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
-const PurchaseInvoiceCreate = lazy(() => import('@/pages/PurchaseInvoice/PurchaseInvoiceCreate'));
-const PurchaseInvoiceStockToBuy = lazy(() => import('@/pages/PurchaseInvoice/PurchaseInvoiceStockToBuy'));
-
+const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate.jsx'));
+const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead.jsx'));
+const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate.jsx'));
+const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment.jsx'));
+const Quote = lazy(() => import('@/pages/Quote'));
+const QuoteCreate = lazy(() => import('@/pages/Quote/QuoteCreate.jsx'));
+const QuoteRead = lazy(() => import('@/pages/Quote/QuoteRead.jsx'));
+const QuoteUpdate = lazy(() => import('@/pages/Quote/QuoteUpdate.jsx'));
+const Payment = lazy(() => import('@/pages/Payment'));
+const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead.jsx'));
+const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate.jsx'));
 const Product = lazy(() => import('@/pages/Product'));
 const Supplier = lazy(() => import('@/pages/Supplier'));
-const ExpenseCategory = lazy(() => import('@/pages/Expense/Category'));
+const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
+const StockLedger = lazy(() => import('@/pages/StockLedger'));
+const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
 const Expense = lazy(() => import('@/pages/Expense'));
-const ReportsRecap = lazy(() => import('@/pages/Reports/Recap'));
-
-const Settings = lazy(() => import('@/pages/Settings/Settings'));
+const StockToBuy = lazy(() => import('@/pages/StockToBuy'));
+const ReportsRecap = lazy(() => import('@/pages/Reports/Recap.jsx'));
+const Settings = lazy(() => import('@/pages/Settings/Settings.jsx'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
-
-const Profile = lazy(() => import('@/pages/Profile'));
-
-const About = lazy(() => import('@/pages/About'));
+const Profile = lazy(() => import('@/pages/Profile.jsx'));
+const About = lazy(() => import('@/pages/About.jsx'));
 
 let routes = {
   expense: [],
@@ -167,10 +152,6 @@ let routes = {
     {
       path: '/taxes',
       element: <Taxes />,
-    },
-    {
-      path: '/reports/recap',
-      element: <Recap />,
     },
 
     {
