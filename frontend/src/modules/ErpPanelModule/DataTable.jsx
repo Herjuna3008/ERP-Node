@@ -52,7 +52,9 @@ export default function DataTable({ config, extra = [] }) {
   const { erpContextAction } = useErpContext();
   const { modal } = erpContextAction;
 
-  const items = [
+  const allowedActions = Array.isArray(config.allowedActions) ? config.allowedActions : null;
+
+  let items = [
     {
       label: translate('Show'),
       key: 'read',
@@ -79,6 +81,19 @@ export default function DataTable({ config, extra = [] }) {
       icon: <DeleteOutlined />,
     },
   ];
+
+  items = items.filter((item) => {
+    if (item.type === 'divider') return true;
+    if (!allowedActions) return true;
+    return allowedActions.includes(item.key);
+  });
+
+  items = items.filter((item, index, array) => {
+    if (item.type !== 'divider') return true;
+    const prev = array[index - 1];
+    const next = array[index + 1];
+    return prev && prev.type !== 'divider' && next && next.type !== 'divider';
+  });
 
   const navigate = useNavigate();
 
