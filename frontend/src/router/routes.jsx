@@ -35,6 +35,15 @@ const PurchaseInvoiceStockToBuy = lazy(() => import('@/pages/PurchaseInvoice/Pur
 
 const Expense = lazy(() => import('@/pages/Expense'));
 
+const Product = lazy(() => import('@/pages/Product'));
+const Supplier = lazy(() => import('@/pages/Supplier'));
+const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
+const StockLedger = lazy(() => import('@/pages/StockLedger'));
+const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
+const Expense = lazy(() => import('@/pages/Expense'));
+const StockToBuy = lazy(() => import('@/pages/StockToBuy'));
+const Recap = lazy(() => import('@/pages/Recap'));
+
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
@@ -118,32 +127,16 @@ let routes = {
       element: <PaymentUpdate />,
     },
     {
-      path: '/purchaseinvoice',
-      element: <PurchaseInvoice />,
-    },
-    {
-      path: '/purchaseinvoice/create',
-      element: <PurchaseInvoiceCreate />,
-    },
-    {
-      path: '/purchaseinvoice/stock-to-buy',
-      element: <PurchaseInvoiceStockToBuy />,
-    },
-    {
-      path: '/expense',
-      element: <Expense />,
-    },
-    {
       path: '/product',
-      element: <Products />,
+      element: <Product />,
     },
     {
       path: '/supplier',
-      element: <Suppliers />,
+      element: <Supplier />,
     },
     {
       path: '/purchaseinvoice',
-      element: <PurchaseInvoices />,
+      element: <PurchaseInvoice />,
     },
     {
       path: '/stock/ledger',
@@ -151,11 +144,11 @@ let routes = {
     },
     {
       path: '/expense/category',
-      element: <ExpenseCategories />,
+      element: <ExpenseCategory />,
     },
     {
       path: '/expense',
-      element: <Expenses />,
+      element: <Expense />,
     },
     {
       path: '/purchaseinvoice/stock-to-buy',

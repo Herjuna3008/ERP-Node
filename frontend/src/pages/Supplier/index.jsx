@@ -4,21 +4,20 @@ import { fields } from './config';
 
 import useLanguage from '@/locale/useLanguage';
 
-export default function Expense() {
+export default function Supplier() {
   const translate = useLanguage();
-  const entity = 'expense';
-
+  const entity = 'supplier';
   const searchConfig = {
-    displayLabels: ['description', 'reference'],
-    searchFields: 'description,reference',
+    displayLabels: ['name', 'email'],
+    searchFields: 'name,email',
   };
-  const deleteModalLabels = ['description', 'reference'];
+  const deleteModalLabels = ['name'];
 
   const Labels = {
-    PANEL_TITLE: translate('expense'),
-    DATATABLE_TITLE: translate('expense_list'),
-    ADD_NEW_ENTITY: translate('add_new_expense'),
-    ENTITY_NAME: translate('expense'),
+    PANEL_TITLE: translate('supplier'),
+    DATATABLE_TITLE: translate('supplier_list'),
+    ADD_NEW_ENTITY: translate('add_new_supplier'),
+    ENTITY_NAME: translate('supplier'),
   };
 
   const configPage = {
@@ -40,3 +39,4 @@ export default function Expense() {
       config={config}
     />
   );
+}

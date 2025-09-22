@@ -4,21 +4,21 @@ import { fields } from './config';
 
 import useLanguage from '@/locale/useLanguage';
 
-export default function Expense() {
+export default function StockLedger() {
   const translate = useLanguage();
-  const entity = 'expense';
+  const entity = 'stockledger';
 
   const searchConfig = {
-    displayLabels: ['description', 'reference'],
-    searchFields: 'description,reference',
+    displayLabels: ['notes'],
+    searchFields: 'notes',
   };
-  const deleteModalLabels = ['description', 'reference'];
+  const deleteModalLabels = ['product.name', 'entryType'];
 
   const Labels = {
-    PANEL_TITLE: translate('expense'),
-    DATATABLE_TITLE: translate('expense_list'),
-    ADD_NEW_ENTITY: translate('add_new_expense'),
-    ENTITY_NAME: translate('expense'),
+    PANEL_TITLE: translate('stock_ledger'),
+    DATATABLE_TITLE: translate('stock_ledger'),
+    ADD_NEW_ENTITY: translate('add_new_stock_ledger_entry'),
+    ENTITY_NAME: translate('stock_ledger'),
   };
 
   const configPage = {
@@ -40,3 +40,4 @@ export default function Expense() {
       config={config}
     />
   );
+}
