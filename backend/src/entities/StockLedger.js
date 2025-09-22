@@ -22,5 +22,19 @@ module.exports = new EntitySchema({
       joinColumn: { name: 'product' },
       onDelete: 'CASCADE',
     },
+    invoice: {
+      type: 'many-to-one',
+      target: 'Invoice',
+      joinColumn: { name: 'invoiceId' },
+      nullable: true,
+      onDelete: 'SET NULL',
+    },
+    purchaseInvoice: {
+      type: 'many-to-one',
+      target: 'PurchaseInvoice',
+      joinColumn: { name: 'purchaseInvoiceId' },
+      nullable: true,
+      onDelete: 'SET NULL',
+    },
   },
 });

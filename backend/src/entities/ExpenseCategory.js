@@ -11,4 +11,11 @@ module.exports = new EntitySchema({
     created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
     updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
   },
+  relations: {
+    expenses: {
+      type: 'one-to-many',
+      target: 'Expense',
+      inverseSide: 'category',
+    },
+  },
 });

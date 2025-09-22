@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
 const Client = require('./entities/Client');
 const Invoice = require('./entities/Invoice');
+const InvoiceItem = require('./entities/InvoiceItem');
 const Payment = require('./entities/Payment');
 const PaymentMode = require('./entities/PaymentMode');
 const Quote = require('./entities/Quote');
@@ -30,7 +31,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'erp',
-  synchronize: true,
+  synchronize: false,
   logging: false,
   entities: [
     Client,

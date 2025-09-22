@@ -29,5 +29,12 @@ module.exports = new EntitySchema({
       onDelete: 'SET NULL',
       nullable: true,
     },
+    invoice: {
+      type: 'many-to-one',
+      target: 'Invoice',
+      joinColumn: { name: 'invoiceId' },
+      onDelete: 'SET NULL',
+      nullable: true,
+    },
   },
 });
