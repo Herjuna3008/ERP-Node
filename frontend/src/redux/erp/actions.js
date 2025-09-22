@@ -45,12 +45,29 @@ export const erp = {
       let data = await request.list({ entity, options });
 
       if (data.success === true) {
+        const items = Array.isArray(data.result)
+          ? data.result
+          : Array.isArray(data.result?.items)
+          ? data.result.items
+          : [];
+
+        const paginationData = data.pagination || {};
+        const currentPage = Number.parseInt(paginationData.page ?? options?.page ?? 1, 10);
+        const totalItems = Number.parseInt(
+          paginationData.count ?? data.totalCount ?? data.total ?? items.length,
+          10
+        );
+        const pageSize = Number.parseInt(
+          paginationData.items ?? options?.items ?? (items.length > 0 ? items.length : 10),
+          10
+        );
+
         const result = {
-          items: data.result,
+          items,
           pagination: {
-            current: parseInt(data.pagination.page, 10),
-            pageSize: options?.items || 10,
-            total: parseInt(data.pagination.count, 10),
+            current: currentPage,
+            pageSize,
+            total: totalItems,
           },
         };
         dispatch({
