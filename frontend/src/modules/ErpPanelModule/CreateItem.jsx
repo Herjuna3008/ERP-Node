@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 
 import { useNavigate } from 'react-router-dom';
+import { computeItemTotals, computeInvoiceTotals } from '@/utils/invoiceCalculations';
 
 function SaveForm({ form }) {
   const translate = useLanguage();
@@ -63,11 +64,8 @@ export default function CreateItem({ config, CreateForm }) {
             let offerTotal = calculate.multiply(item['quantity'], item['offerPrice']);
             subOfferTotal = calculate.add(subOfferTotal, offerTotal);
           }
-          if (item.quantity && item.price) {
-            let total = calculate.multiply(item['quantity'], item['price']);
-            //sub total
-            subTotal = calculate.add(subTotal, total);
-          }
+          const { total } = computeItemTotals(item);
+          subTotal = calculate.add(subTotal, total);
         }
       });
       setSubTotal(subTotal);
@@ -87,20 +85,28 @@ export default function CreateItem({ config, CreateForm }) {
   }, [isSuccess]);
 
   const onSubmit = (fieldsValue) => {
-    console.log('🚀 ~ onSubmit ~ fieldsValue:', fieldsValue);
-    if (fieldsValue) {
-      if (fieldsValue.items) {
-        let newList = [...fieldsValue.items];
-        newList.map((item) => {
-          item.total = calculate.multiply(item.quantity, item.price);
-        });
-        fieldsValue = {
-          ...fieldsValue,
-          items: newList,
-        };
-      }
+    if (!fieldsValue) {
+      return;
     }
-    dispatch(erp.create({ entity, jsonData: fieldsValue }));
+    const taxValue = Number(fieldsValue.taxRate || 0);
+    const { items = [] } = fieldsValue;
+    const { items: normalizedItems, subTotal, discountAmount, taxTotal, total } = computeInvoiceTotals({
+      items,
+      globalDiscountType: fieldsValue.globalDiscountType,
+      globalDiscountValue: fieldsValue.globalDiscountValue,
+      taxRate: taxValue / 100,
+    });
+
+    const payload = {
+      ...fieldsValue,
+      items: normalizedItems,
+      subTotal,
+      discount: discountAmount,
+      taxTotal,
+      total,
+    };
+
+    dispatch(erp.create({ entity, jsonData: payload }));
   };
 
   return (

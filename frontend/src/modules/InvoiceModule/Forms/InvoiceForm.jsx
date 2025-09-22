@@ -18,6 +18,8 @@ import useLanguage from '@/locale/useLanguage';
 import calculate from '@/utils/calculate';
 import { useSelector } from 'react-redux';
 import SelectAsync from '@/components/SelectAsync';
+import { request } from '@/request';
+import { computeGlobalDiscountAmount } from '@/utils/invoiceCalculations';
 
 export default function InvoiceForm({ subTotal = 0, current = null }) {
   const { last_invoice_number } = useSelector(selectFinanceSettings);
@@ -33,35 +35,99 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
   const translate = useLanguage();
   const { dateFormat } = useDate();
   const { last_invoice_number } = useSelector(selectFinanceSettings);
+  const form = Form.useFormInstance();
   const [total, setTotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
+  const [taxSelection, setTaxSelection] = useState(null);
   const [taxTotal, setTaxTotal] = useState(0);
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [lastNumber, setLastNumber] = useState(() => last_invoice_number + 1);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
+  const globalDiscountType =
+    (Form.useWatch('globalDiscountType', form) || 'NONE').toString().toUpperCase();
+  const globalDiscountValue = Form.useWatch('globalDiscountValue', form) ?? 0;
 
   const handelTaxChange = (value) => {
-    setTaxRate(value / 100);
+    if (value === undefined) {
+      setTaxSelection(null);
+      setTaxRate(0);
+      return;
+    }
+    const numericValue = Number(value) || 0;
+    setTaxSelection(numericValue);
+    setTaxRate(numericValue / 100);
   };
 
   useEffect(() => {
+    let ignore = false;
+    const fetchProducts = async () => {
+      setProductsLoading(true);
+      try {
+        const response = await request.list({ entity: 'products' });
+        if (!ignore && response?.success && Array.isArray(response.result)) {
+          setProducts(response.result);
+        }
+      } finally {
+        if (!ignore) {
+          setProductsLoading(false);
+        }
+      }
+    };
+    fetchProducts();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (current) {
-      const { taxRate = 0, year, number } = current;
-      setTaxRate(taxRate / 100);
+      const {
+        taxRate: currentTaxRate = 0,
+        year,
+        number,
+        globalDiscountType: currentDiscountType,
+        globalDiscountValue: currentDiscountValue,
+      } = current;
+      setTaxRate(Number(currentTaxRate) / 100);
+      setTaxSelection(Number(currentTaxRate));
       setCurrentYear(year);
       setLastNumber(number);
+      form.setFieldsValue({
+        globalDiscountType: currentDiscountType || 'NONE',
+        globalDiscountValue: currentDiscountValue ?? 0,
+      });
     }
-  }, [current]);
+  }, [current, form]);
   useEffect(() => {
-    const currentTotal = calculate.add(calculate.multiply(subTotal, taxRate), subTotal);
-    setTaxTotal(Number.parseFloat(calculate.multiply(subTotal, taxRate)));
+    const computedDiscount = computeGlobalDiscountAmount(subTotal, globalDiscountType, globalDiscountValue);
+    setDiscountAmount(Number.parseFloat(computedDiscount));
+    const netSubtotal = subTotal > computedDiscount ? calculate.sub(subTotal, computedDiscount) : 0;
+    const computedTaxTotal = taxRate ? calculate.multiply(netSubtotal, taxRate) : 0;
+    setTaxTotal(Number.parseFloat(computedTaxTotal));
+    const currentTotal = calculate.add(netSubtotal, computedTaxTotal);
     setTotal(Number.parseFloat(currentTotal));
-  }, [subTotal, taxRate]);
+    form.setFieldsValue({
+      discount: computedDiscount,
+      subTotal,
+      taxTotal: computedTaxTotal,
+      total: currentTotal,
+    });
+  }, [subTotal, taxRate, globalDiscountType, globalDiscountValue, form]);
 
   const addField = useRef(false);
 
   useEffect(() => {
     addField.current.click();
   }, []);
+
+  useEffect(() => {
+    if (globalDiscountType === 'NONE' && globalDiscountValue) {
+      form.setFieldValue('globalDiscountValue', 0);
+    }
+  }, [globalDiscountType, globalDiscountValue, form]);
 
   return (
     <>
@@ -174,19 +240,25 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
       </Row>
       <Divider dashed />
       <Row gutter={[12, 12]} style={{ position: 'relative' }}>
-        <Col className="gutter-row" span={5}>
-          <p>{translate('Item')}</p>
+        <Col xs={24} md={6}>
+          <p>{translate('product')}</p>
         </Col>
-        <Col className="gutter-row" span={7}>
-          <p>{translate('Description')}</p>
+        <Col xs={24} md={4}>
+          <p>{translate('description')}</p>
         </Col>
-        <Col className="gutter-row" span={3}>
-          <p>{translate('Quantity')}</p>{' '}
+        <Col xs={12} md={3}>
+          <p>{translate('quantity')}</p>
         </Col>
-        <Col className="gutter-row" span={4}>
-          <p>{translate('Price')}</p>
+        <Col xs={12} md={3}>
+          <p>{translate('price')}</p>
         </Col>
-        <Col className="gutter-row" span={5}>
+        <Col xs={12} md={3}>
+          <p>{translate('discount_type')}</p>
+        </Col>
+        <Col xs={12} md={2}>
+          <p>{translate('discount_value')}</p>
+        </Col>
+        <Col xs={24} md={3}>
           <p>{translate('Total')}</p>
         </Col>
       </Row>
@@ -194,7 +266,14 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
         {(fields, { add, remove }) => (
           <>
             {fields.map((field) => (
-              <ItemRow key={field.key} remove={remove} field={field} current={current}></ItemRow>
+              <ItemRow
+                key={field.key}
+                remove={remove}
+                field={field}
+                current={current}
+                products={products}
+                productsLoading={productsLoading}
+              ></ItemRow>
             ))}
             <Form.Item>
               <Button
@@ -210,7 +289,48 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
           </>
         )}
       </Form.List>
+      <Row gutter={[12, 12]}>
+        <Col xs={24} md={6}>
+          <Form.Item
+            label={translate('global_discount_type')}
+            name="globalDiscountType"
+            initialValue="NONE"
+          >
+            <Select>
+              <Select.Option value="NONE">{translate('none')}</Select.Option>
+              <Select.Option value="PERCENTAGE">{translate('percentage')}</Select.Option>
+              <Select.Option value="FIXED">{translate('fixed_amount')}</Select.Option>
+            </Select>
+          </Form.Item>
+        </Col>
+        <Col xs={24} md={4}>
+          <Form.Item
+            label={translate('global_discount_value')}
+            name="globalDiscountValue"
+            initialValue={0}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              max={globalDiscountType === 'PERCENTAGE' ? 100 : undefined}
+              disabled={globalDiscountType === 'NONE'}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
       <Divider dashed />
+      <Form.Item name="discount" hidden>
+        <InputNumber />
+      </Form.Item>
+      <Form.Item name="subTotal" hidden>
+        <InputNumber />
+      </Form.Item>
+      <Form.Item name="taxTotal" hidden>
+        <InputNumber />
+      </Form.Item>
+      <Form.Item name="total" hidden>
+        <InputNumber />
+      </Form.Item>
       <div style={{ position: 'relative', width: ' 100%', float: 'right' }}>
         <Row gutter={[12, -5]}>
           <Col className="gutter-row" span={5}>
@@ -238,6 +358,23 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
         </Row>
         <Row gutter={[12, -5]}>
           <Col className="gutter-row" span={4} offset={15}>
+            <p
+              style={{
+                paddingLeft: '12px',
+                paddingTop: '5px',
+                margin: 0,
+                textAlign: 'right',
+              }}
+            >
+              {translate('discount_amount')} :
+            </p>
+          </Col>
+          <Col className="gutter-row" span={5}>
+            <MoneyInputFormItem readOnly value={discountAmount} />
+          </Col>
+        </Row>
+        <Row gutter={[12, -5]}>
+          <Col className="gutter-row" span={4} offset={15}>
             <Form.Item
               name="taxRate"
               rules={[
@@ -247,7 +384,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
               ]}
             >
               <SelectAsync
-                value={taxRate}
+                value={taxSelection}
                 onChange={handelTaxChange}
                 entity={'taxes'}
                 outputValue={'taxValue'}
