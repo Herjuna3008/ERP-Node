@@ -33,24 +33,10 @@ const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
 const PurchaseInvoiceCreate = lazy(() => import('@/pages/PurchaseInvoice/PurchaseInvoiceCreate'));
 const PurchaseInvoiceStockToBuy = lazy(() => import('@/pages/PurchaseInvoice/PurchaseInvoiceStockToBuy'));
 
-const Expense = lazy(() => import('@/pages/Expense'));
-
 const Product = lazy(() => import('@/pages/Product'));
 const Supplier = lazy(() => import('@/pages/Supplier'));
-const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
-const StockLedger = lazy(() => import('@/pages/StockLedger'));
-const ExpenseCategory = lazy(() => import('@/pages/ExpenseCategory'));
-const Expense = lazy(() => import('@/pages/Expense'));
-const StockToBuy = lazy(() => import('@/pages/StockToBuy'));
-const Recap = lazy(() => import('@/pages/Recap'));
-
-const Product = lazy(() => import('@/pages/Product'));
-const Supplier = lazy(() => import('@/pages/Supplier'));
-const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
-const StockLedger = lazy(() => import('@/pages/Stock/Ledger'));
 const ExpenseCategory = lazy(() => import('@/pages/Expense/Category'));
 const Expense = lazy(() => import('@/pages/Expense'));
-const StockToBuy = lazy(() => import('@/pages/PurchaseInvoice/StockToBuy'));
 const ReportsRecap = lazy(() => import('@/pages/Reports/Recap'));
 
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
@@ -60,8 +46,6 @@ const Taxes = lazy(() => import('@/pages/Taxes'));
 const Profile = lazy(() => import('@/pages/Profile'));
 
 const About = lazy(() => import('@/pages/About'));
-
-const Recap = lazy(() => import('@/pages/Reports/Recap'));
 
 let routes = {
   expense: [],
