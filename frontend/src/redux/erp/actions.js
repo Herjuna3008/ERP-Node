@@ -1,6 +1,34 @@
 import * as actionTypes from './types';
 import { request } from '@/request';
 
+const buildPagination = (data, options = {}) => {
+  const pagination = data?.pagination || {};
+  const current = Number(
+    pagination.page ??
+      pagination.current ??
+      options.page ??
+      1
+  );
+  const pageSize = Number(
+    pagination.pageSize ??
+      pagination.items ??
+      options.items ??
+      10
+  );
+  const total = Number(
+    pagination.count ??
+      pagination.total ??
+      data?.totalCount ??
+      (Array.isArray(data?.result) ? data.result.length : 0)
+  );
+
+  return {
+    current,
+    pageSize,
+    total,
+  };
+};
+
 export const erp = {
   resetState: () => (dispatch) => {
     dispatch({
@@ -34,7 +62,7 @@ export const erp = {
       });
     },
   list:
-    ({ entity, options = { page: 1, items: 10 } }) =>
+    ({ entity, options = { page: 1, items: 10 }, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -42,32 +70,18 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.list({ entity, options });
+      const data = await (service?.list
+        ? service.list({ entity, options })
+        : request.list({ entity, options }));
 
       if (data.success === true) {
-        const items = Array.isArray(data.result)
-          ? data.result
-          : Array.isArray(data.result?.items)
-          ? data.result.items
-          : [];
-
-        const paginationData = data.pagination || {};
-        const currentPage = Number.parseInt(paginationData.page ?? options?.page ?? 1, 10);
-        const totalItems = Number.parseInt(
-          paginationData.count ?? data.totalCount ?? data.total ?? items.length,
-          10
-        );
-        const pageSize = Number.parseInt(
-          paginationData.items ?? options?.items ?? (items.length > 0 ? items.length : 10),
-          10
-        );
-
+        const pagination = buildPagination(data, options);
         const result = {
-          items,
+          items: data.result || [],
           pagination: {
-            current: currentPage,
-            pageSize,
-            total: totalItems,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
           },
         };
         dispatch({
@@ -84,7 +98,7 @@ export const erp = {
       }
     },
   create:
-    ({ entity, jsonData }) =>
+    ({ entity, jsonData, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -92,7 +106,9 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.create({ entity, jsonData });
+      const data = await (service?.create
+        ? service.create({ entity, jsonData })
+        : request.create({ entity, jsonData }));
 
       if (data.success === true) {
         dispatch({
@@ -171,7 +187,7 @@ export const erp = {
       }
     },
   read:
-    ({ entity, id }) =>
+    ({ entity, id, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -179,7 +195,9 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.read({ entity, id });
+      const data = await (service?.read
+        ? service.read({ entity, id })
+        : request.read({ entity, id }));
 
       if (data.success === true) {
         dispatch({
@@ -200,7 +218,7 @@ export const erp = {
       }
     },
   update:
-    ({ entity, id, jsonData }) =>
+    ({ entity, id, jsonData, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -208,7 +226,9 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.update({ entity, id, jsonData });
+      const data = await (service?.update
+        ? service.update({ entity, id, jsonData })
+        : request.update({ entity, id, jsonData }));
 
       if (data.success === true) {
         dispatch({
@@ -230,7 +250,7 @@ export const erp = {
     },
 
   delete:
-    ({ entity, id }) =>
+    ({ entity, id, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.RESET_ACTION,
@@ -242,7 +262,9 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.delete({ entity, id });
+      const data = await (service?.delete
+        ? service.delete({ entity, id })
+        : request.delete({ entity, id }));
 
       if (data.success === true) {
         dispatch({
@@ -260,7 +282,7 @@ export const erp = {
     },
 
   search:
-    ({ entity, options }) =>
+    ({ entity, options, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -268,7 +290,9 @@ export const erp = {
         payload: null,
       });
 
-      let data = await request.search({ entity, options });
+      const data = await (service?.search
+        ? service.search({ entity, options })
+        : request.search({ entity, options }));
 
       if (data.success === true) {
         dispatch({

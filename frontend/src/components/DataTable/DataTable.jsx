@@ -40,7 +40,7 @@ function AddNewItem({ config }) {
   );
 }
 export default function DataTable({ config, extra = [] }) {
-  let { entity, dataTableColumns, DATATABLE_TITLE, fields, searchConfig } = config;
+  let { entity, dataTableColumns, DATATABLE_TITLE, fields, searchConfig, service } = config;
   const { crudContextAction } = useCrudContext();
   const { panel, collapsedBox, modal, readBox, editBox, advancedBox } = crudContextAction;
   const translate = useLanguage();
@@ -154,17 +154,17 @@ export default function DataTable({ config, extra = [] }) {
 
   const handelDataTableLoad = useCallback((pagination) => {
     const options = { page: pagination.current || 1, items: pagination.pageSize || 10 };
-    dispatch(crud.list({ entity, options }));
+    dispatch(crud.list({ entity, options, service }));
   }, []);
 
   const filterTable = (e) => {
     const value = e.target.value;
     const options = { q: value, fields: searchConfig?.searchFields || '' };
-    dispatch(crud.list({ entity, options }));
+    dispatch(crud.list({ entity, options, service }));
   };
 
   const dispatcher = () => {
-    dispatch(crud.list({ entity }));
+    dispatch(crud.list({ entity, service }));
   };
 
   useEffect(() => {

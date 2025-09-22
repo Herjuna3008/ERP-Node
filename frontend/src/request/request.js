@@ -24,7 +24,48 @@ function includeToken() {
   }
 }
 
+const buildQueryString = (options = {}) => {
+  const keys = Object.keys(options);
+  if (!keys.length) {
+    return '';
+  }
+
+  const query = keys
+    .filter((key) => options[key] !== undefined && options[key] !== null)
+    .map((key) => `${key}=${options[key]}`)
+    .join('&');
+
+  return query ? `?${query}` : '';
+};
+
+const performGet = async ({ entity, options = {}, responseType = 'json' }) => {
+  try {
+    includeToken();
+    const query = buildQueryString(options);
+
+    const axiosOptions = {};
+    if (responseType && responseType !== 'json') {
+      axiosOptions.responseType = responseType;
+    }
+
+    const response = await axios.get(`${entity}${query}`, axiosOptions);
+
+    if (!responseType || responseType === 'json') {
+      successHandler(response, {
+        notifyOnSuccess: false,
+        notifyOnFailed: true,
+      });
+      return response.data;
+    }
+
+    return response;
+  } catch (error) {
+    return errorHandler(error);
+  }
+};
+
 const request = {
+  get: performGet,
   create: async ({ entity, jsonData }) => {
     try {
       includeToken();
@@ -198,15 +239,6 @@ const request = {
       includeToken();
       const response = await axios.post(entity, jsonData);
 
-      return response.data;
-    } catch (error) {
-      return errorHandler(error);
-    }
-  },
-  get: async ({ entity }) => {
-    try {
-      includeToken();
-      const response = await axios.get(entity);
       return response.data;
     } catch (error) {
       return errorHandler(error);
