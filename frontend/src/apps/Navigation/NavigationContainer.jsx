@@ -26,6 +26,11 @@ import {
   FilterOutlined,
   WalletOutlined,
   ReconciliationOutlined,
+  ShoppingCartOutlined,
+  StockOutlined,
+  DollarCircleOutlined,
+  PieChartOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -74,6 +79,54 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'payment',
       icon: <CreditCardOutlined />,
       label: <Link to={'/payment'}>{translate('payments')}</Link>,
+    },
+    {
+      key: 'product',
+      icon: <TagsOutlined />,
+      label: <Link to={'/product'}>{translate('products')}</Link>,
+    },
+    {
+      key: 'supplier',
+      icon: <UserOutlined />,
+      label: <Link to={'/supplier'}>{translate('suppliers')}</Link>,
+    },
+    {
+      key: 'purchaseinvoice',
+      icon: <FileOutlined />,
+      label: (
+        <Link to={'/purchaseinvoice'}>{translate('purchase_invoices')}</Link>
+      ),
+    },
+    {
+      key: 'stock/ledger',
+      icon: <StockOutlined />,
+      label: <Link to={'/stock/ledger'}>{translate('stock_ledger')}</Link>,
+    },
+    {
+      key: 'expense/category',
+      icon: <AppstoreOutlined />,
+      label: (
+        <Link to={'/expense/category'}>{translate('expense_categories')}</Link>
+      ),
+    },
+    {
+      key: 'expense',
+      icon: <DollarCircleOutlined />,
+      label: <Link to={'/expense'}>{translate('expenses')}</Link>,
+    },
+    {
+      key: 'purchaseinvoice/stock-to-buy',
+      icon: <ShoppingCartOutlined />,
+      label: (
+        <Link to={'/purchaseinvoice/stock-to-buy'}>
+          {translate('stock_to_buy')}
+        </Link>
+      ),
+    },
+    {
+      key: 'reports/recap',
+      icon: <PieChartOutlined />,
+      label: <Link to={'/reports/recap'}>{translate('recap')}</Link>,
     },
 
     {
