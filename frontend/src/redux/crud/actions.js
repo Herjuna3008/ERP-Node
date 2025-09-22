@@ -1,6 +1,34 @@
 import * as actionTypes from './types';
 import { request } from '@/request';
 
+const buildPagination = (data, options = {}) => {
+  const pagination = data?.pagination || {};
+  const current = Number(
+    pagination.page ??
+      pagination.current ??
+      options.page ??
+      1
+  );
+  const pageSize = Number(
+    pagination.pageSize ??
+      pagination.items ??
+      options.items ??
+      10
+  );
+  const total = Number(
+    pagination.count ??
+      pagination.total ??
+      data?.totalCount ??
+      (Array.isArray(data?.result) ? data.result.length : 0)
+  );
+
+  return {
+    current,
+    pageSize,
+    total,
+  };
+};
+
 export const crud = {
   resetState:
     (props = {}) =>
@@ -36,7 +64,7 @@ export const crud = {
       });
     },
   list:
-    ({ entity, options = { page: 1, items: 10 } }) =>
+    ({ entity, options = { page: 1, items: 10 }, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -44,15 +72,18 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.list({ entity, options });
+      const data = await (service?.list
+        ? service.list({ entity, options })
+        : request.list({ entity, options }));
 
       if (data.success === true) {
+        const pagination = buildPagination(data, options);
         const result = {
-          items: data.result,
+          items: data.result || [],
           pagination: {
-            current: parseInt(data.pagination.page, 10),
-            pageSize: options?.items,
-            total: parseInt(data.pagination.count, 10),
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
           },
         };
         dispatch({
@@ -69,7 +100,7 @@ export const crud = {
       }
     },
   create:
-    ({ entity, jsonData, withUpload = false }) =>
+    ({ entity, jsonData, withUpload = false, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -77,7 +108,9 @@ export const crud = {
         payload: null,
       });
       let data = null;
-      if (withUpload) {
+      if (service?.create) {
+        data = await service.create({ entity, jsonData, withUpload });
+      } else if (withUpload) {
         data = await request.createAndUpload({ entity, jsonData });
       } else {
         data = await request.create({ entity, jsonData });
@@ -103,7 +136,7 @@ export const crud = {
       }
     },
   read:
-    ({ entity, id }) =>
+    ({ entity, id, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -111,7 +144,9 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.read({ entity, id });
+      const data = await (service?.read
+        ? service.read({ entity, id })
+        : request.read({ entity, id }));
 
       if (data.success === true) {
         dispatch({
@@ -132,7 +167,7 @@ export const crud = {
       }
     },
   update:
-    ({ entity, id, jsonData, withUpload = false }) =>
+    ({ entity, id, jsonData, withUpload = false, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -142,7 +177,9 @@ export const crud = {
 
       let data = null;
 
-      if (withUpload) {
+      if (service?.update) {
+        data = await service.update({ entity, id, jsonData, withUpload });
+      } else if (withUpload) {
         data = await request.updateAndUpload({ entity, id, jsonData });
       } else {
         data = await request.update({ entity, id, jsonData });
@@ -168,7 +205,7 @@ export const crud = {
     },
 
   delete:
-    ({ entity, id }) =>
+    ({ entity, id, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.RESET_ACTION,
@@ -180,7 +217,9 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.delete({ entity, id });
+      const data = await (service?.delete
+        ? service.delete({ entity, id })
+        : request.delete({ entity, id }));
 
       if (data.success === true) {
         dispatch({
@@ -198,7 +237,7 @@ export const crud = {
     },
 
   search:
-    ({ entity, options = {} }) =>
+    ({ entity, options = {}, service }) =>
     async (dispatch) => {
       dispatch({
         type: actionTypes.REQUEST_LOADING,
@@ -206,7 +245,9 @@ export const crud = {
         payload: null,
       });
 
-      let data = await request.search({ entity, options });
+      const data = await (service?.search
+        ? service.search({ entity, options })
+        : request.search({ entity, options }));
 
       if (data.success === true) {
         dispatch({

@@ -12,7 +12,7 @@ import { useCrudContext } from '@/context/crud';
 import { selectSearchedItems } from '@/redux/crud/selectors';
 
 function SearchItemComponent({ config, onRerender }) {
-  let { entity, searchConfig } = config;
+  let { entity, searchConfig, service } = config;
 
   const { displayLabels, searchFields, outputValue = '_id' } = searchConfig;
 
@@ -49,7 +49,7 @@ function SearchItemComponent({ config, onRerender }) {
         q: debouncedValue,
         fields: searchFields,
       };
-      dispatch(crud.search({ entity, options }));
+      dispatch(crud.search({ entity, options, service }));
     }
     return () => {
       cancel();

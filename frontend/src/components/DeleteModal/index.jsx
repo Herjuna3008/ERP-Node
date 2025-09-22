@@ -17,6 +17,7 @@ export default function DeleteModal({ config }) {
     deleteModalLabels,
     deleteMessage = translate('are_you_sure_you_want_to_delete'),
     modalTitle = translate('delete_confirmation'),
+    service,
   } = config;
   const dispatch = useDispatch();
   const { current, isLoading, isSuccess } = useSelector(selectDeletedItem);
@@ -32,7 +33,7 @@ export default function DeleteModal({ config }) {
     if (isSuccess) {
       console.log('🚀 ~ useEffect ~ DeleteModal isSuccess:', isSuccess);
       modal.close();
-      dispatch(crud.list({ entity }));
+      dispatch(crud.list({ entity, service }));
       // dispatch(crud.resetAction({actionType:"delete"})); // check here maybe it wrong
     }
     if (current) {
@@ -44,7 +45,7 @@ export default function DeleteModal({ config }) {
 
   const handleOk = () => {
     const id = current._id;
-    dispatch(crud.delete({ entity, id }));
+    dispatch(crud.delete({ entity, id, service }));
     readBox.close();
     modal.close();
     panel.close();

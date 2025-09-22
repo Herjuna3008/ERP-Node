@@ -24,7 +24,48 @@ function includeToken() {
   }
 }
 
+const buildQueryString = (options = {}) => {
+  const keys = Object.keys(options);
+  if (!keys.length) {
+    return '';
+  }
+
+  const query = keys
+    .filter((key) => options[key] !== undefined && options[key] !== null)
+    .map((key) => `${key}=${options[key]}`)
+    .join('&');
+
+  return query ? `?${query}` : '';
+};
+
+const performGet = async ({ entity, options = {}, responseType = 'json' }) => {
+  try {
+    includeToken();
+    const query = buildQueryString(options);
+
+    const axiosOptions = {};
+    if (responseType && responseType !== 'json') {
+      axiosOptions.responseType = responseType;
+    }
+
+    const response = await axios.get(`${entity}${query}`, axiosOptions);
+
+    if (!responseType || responseType === 'json') {
+      successHandler(response, {
+        notifyOnSuccess: false,
+        notifyOnFailed: true,
+      });
+      return response.data;
+    }
+
+    return response;
+  } catch (error) {
+    return errorHandler(error);
+  }
+};
+
 const request = {
+  get: performGet,
   create: async ({ entity, jsonData }) => {
     try {
       includeToken();
@@ -203,15 +244,6 @@ const request = {
       return errorHandler(error);
     }
   },
-  get: async ({ entity }) => {
-    try {
-      includeToken();
-      const response = await axios.get(entity);
-      return response.data;
-    } catch (error) {
-      return errorHandler(error);
-    }
-  },
   patch: async ({ entity, jsonData }) => {
     try {
       includeToken();
@@ -239,6 +271,31 @@ const request = {
         notifyOnFailed: true,
       });
       return response.data;
+    } catch (error) {
+      return errorHandler(error);
+    }
+  },
+
+  download: async ({ entity, params = {}, fileName }) => {
+    try {
+      includeToken();
+      const response = await axios.get(entity, {
+        params,
+        responseType: 'blob',
+      });
+
+      const disposition = response.headers['content-disposition'];
+      let resolvedName = fileName;
+      if (disposition) {
+        const match = disposition.match(/filename\*=UTF-8''([^;]+)/) || disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          resolvedName = decodeURIComponent(match[1]);
+        }
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+
+      return { success: true, blob, fileName: resolvedName };
     } catch (error) {
       return errorHandler(error);
     }

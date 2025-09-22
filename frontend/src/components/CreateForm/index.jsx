@@ -11,7 +11,7 @@ import { Button, Form } from 'antd';
 import Loading from '@/components/Loading';
 
 export default function CreateForm({ config, formElements, withUpload = false }) {
-  let { entity } = config;
+  let { entity, service } = config;
   const dispatch = useDispatch();
   const { isLoading, isSuccess } = useSelector(selectCreatedItem);
   const { crudContextAction } = useCrudContext();
@@ -30,7 +30,7 @@ export default function CreateForm({ config, formElements, withUpload = false })
     //   return acc;
     // }, {});
 
-    dispatch(crud.create({ entity, jsonData: fieldsValue, withUpload }));
+    dispatch(crud.create({ entity, jsonData: fieldsValue, withUpload, service }));
   };
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function CreateForm({ config, formElements, withUpload = false })
       panel.open();
       form.resetFields();
       dispatch(crud.resetAction({ actionType: 'create' }));
-      dispatch(crud.list({ entity }));
+      dispatch(crud.list({ entity, service }));
     }
   }, [isSuccess]);
 
