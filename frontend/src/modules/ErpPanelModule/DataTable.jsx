@@ -89,6 +89,19 @@ export default function DataTable({ config, extra = [] }) {
         },
       ];
 
+  items = items.filter((item) => {
+    if (item.type === 'divider') return true;
+    if (!allowedActions) return true;
+    return allowedActions.includes(item.key);
+  });
+
+  items = items.filter((item, index, array) => {
+    if (item.type !== 'divider') return true;
+    const prev = array[index - 1];
+    const next = array[index + 1];
+    return prev && prev.type !== 'divider' && next && next.type !== 'divider';
+  });
+
   const navigate = useNavigate();
 
   const handleRead = (record) => {

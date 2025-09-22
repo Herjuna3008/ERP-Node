@@ -276,6 +276,31 @@ const request = {
     }
   },
 
+  download: async ({ entity, params = {}, fileName }) => {
+    try {
+      includeToken();
+      const response = await axios.get(entity, {
+        params,
+        responseType: 'blob',
+      });
+
+      const disposition = response.headers['content-disposition'];
+      let resolvedName = fileName;
+      if (disposition) {
+        const match = disposition.match(/filename\*=UTF-8''([^;]+)/) || disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          resolvedName = decodeURIComponent(match[1]);
+        }
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+
+      return { success: true, blob, fileName: resolvedName };
+    } catch (error) {
+      return errorHandler(error);
+    }
+  },
+
   source: () => {
     const CancelToken = axios.CancelToken;
     const source = CancelToken.source();
