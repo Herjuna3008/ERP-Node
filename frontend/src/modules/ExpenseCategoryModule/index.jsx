@@ -1,7 +1,7 @@
 import CrudModule from '@/modules/CrudModule/CrudModule';
 import DynamicForm from '@/forms/DynamicForm';
 import useLanguage from '@/locale/useLanguage';
-import supplierService from '@/services/supplierService';
+import expenseCategoryService from '@/services/expenseCategoryService';
 
 const fields = {
   name: {
@@ -9,43 +9,35 @@ const fields = {
     required: true,
     label: 'name',
   },
-  email: {
-    type: 'email',
-    label: 'email',
-  },
-  phone: {
-    type: 'phone',
-    label: 'phone',
-  },
-  address: {
+  description: {
     type: 'textarea',
-    label: 'address',
+    label: 'description',
     disableForTable: true,
   },
 };
 
-const SupplierModule = () => {
+const ExpenseCategoryModule = () => {
   const translate = useLanguage();
-  const entity = 'supplier';
+  const entity = 'expensecategory';
 
   const Labels = {
-    PANEL_TITLE: translate('supplier'),
-    DATATABLE_TITLE: translate('supplier_list'),
-    ADD_NEW_ENTITY: translate('add_new_supplier'),
-    ENTITY_NAME: translate('supplier'),
+    PANEL_TITLE: translate('expense_category'),
+    DATATABLE_TITLE: translate('expense_category_list'),
+    ADD_NEW_ENTITY: translate('add_new_expense_category'),
+    ENTITY_NAME: translate('expense_category'),
   };
 
   const searchConfig = {
     displayLabels: ['name'],
-    searchFields: 'name,email,phone',
+    searchFields: 'name',
     outputValue: 'id',
   };
 
-  const deleteModalLabels = ['name', 'email'];
+  const deleteModalLabels = ['name'];
 
   const config = {
     entity,
-    service: supplierService,
+    service: expenseCategoryService,
     fields,
     searchConfig,
     deleteModalLabels,
@@ -61,4 +53,4 @@ const SupplierModule = () => {
   );
 };
 
-export default SupplierModule;
+export default ExpenseCategoryModule;

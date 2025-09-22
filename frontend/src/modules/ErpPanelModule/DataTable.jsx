@@ -41,7 +41,14 @@ function AddNewItem({ config }) {
 
 export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
-  let { entity, dataTableColumns, disableAdd = false, searchConfig } = config;
+  let {
+    entity,
+    dataTableColumns,
+    disableAdd = false,
+    searchConfig,
+    service,
+    disableActions = false,
+  } = config;
 
   const { DATATABLE_TITLE } = config;
 
@@ -52,33 +59,35 @@ export default function DataTable({ config, extra = [] }) {
   const { erpContextAction } = useErpContext();
   const { modal } = erpContextAction;
 
-  const items = [
-    {
-      label: translate('Show'),
-      key: 'read',
-      icon: <EyeOutlined />,
-    },
-    {
-      label: translate('Edit'),
-      key: 'edit',
-      icon: <EditOutlined />,
-    },
-    {
-      label: translate('Download'),
-      key: 'download',
-      icon: <FilePdfOutlined />,
-    },
-    ...extra,
-    {
-      type: 'divider',
-    },
+  const items = disableActions
+    ? []
+    : [
+        {
+          label: translate('Show'),
+          key: 'read',
+          icon: <EyeOutlined />,
+        },
+        {
+          label: translate('Edit'),
+          key: 'edit',
+          icon: <EditOutlined />,
+        },
+        {
+          label: translate('Download'),
+          key: 'download',
+          icon: <FilePdfOutlined />,
+        },
+        ...extra,
+        {
+          type: 'divider',
+        },
 
-    {
-      label: translate('Delete'),
-      key: 'delete',
-      icon: <DeleteOutlined />,
-    },
-  ];
+        {
+          label: translate('Delete'),
+          key: 'delete',
+          icon: <DeleteOutlined />,
+        },
+      ];
 
   const navigate = useNavigate();
 
@@ -96,6 +105,7 @@ export default function DataTable({ config, extra = [] }) {
   };
 
   const handleDelete = (record) => {
+    if (disableActions) return;
     dispatch(erp.currentAction({ actionType: 'delete', data: record }));
     modal.open();
   };
@@ -105,59 +115,61 @@ export default function DataTable({ config, extra = [] }) {
     navigate(`/invoice/pay/${record._id}`);
   };
 
-  dataTableColumns = [
-    ...dataTableColumns,
-    {
-      title: '',
-      key: 'action',
-      fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => {
-              switch (key) {
-                case 'read':
-                  handleRead(record);
-                  break;
-                case 'edit':
-                  handleEdit(record);
-                  break;
-                case 'download':
-                  handleDownload(record);
-                  break;
-                case 'delete':
-                  handleDelete(record);
-                  break;
-                case 'recordPayment':
-                  handleRecordPayment(record);
-                  break;
-                default:
-                  break;
-              }
-              // else if (key === '2')handleCloseTask
-            },
-          }}
-          trigger={['click']}
-        >
-          <EllipsisOutlined
-            style={{ cursor: 'pointer', fontSize: '24px' }}
-            onClick={(e) => e.preventDefault()}
-          />
-        </Dropdown>
-      ),
-    },
-  ];
+  if (!disableActions) {
+    dataTableColumns = [
+      ...dataTableColumns,
+      {
+        title: '',
+        key: 'action',
+        fixed: 'right',
+        render: (_, record) => (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => {
+                switch (key) {
+                  case 'read':
+                    handleRead(record);
+                    break;
+                  case 'edit':
+                    handleEdit(record);
+                    break;
+                  case 'download':
+                    handleDownload(record);
+                    break;
+                  case 'delete':
+                    handleDelete(record);
+                    break;
+                  case 'recordPayment':
+                    handleRecordPayment(record);
+                    break;
+                  default:
+                    break;
+                }
+                // else if (key === '2')handleCloseTask
+              },
+            }}
+            trigger={['click']}
+          >
+            <EllipsisOutlined
+              style={{ cursor: 'pointer', fontSize: '24px' }}
+              onClick={(e) => e.preventDefault()}
+            />
+          </Dropdown>
+        ),
+      },
+    ];
+  }
 
   const dispatch = useDispatch();
 
   const handelDataTableLoad = (pagination) => {
     const options = { page: pagination.current || 1, items: pagination.pageSize || 10 };
-    dispatch(erp.list({ entity, options }));
+    dispatch(erp.list({ entity, options, service }));
   };
 
   const dispatcher = () => {
-    dispatch(erp.list({ entity }));
+    dispatch(erp.list({ entity, service }));
   };
 
   useEffect(() => {
@@ -170,7 +182,7 @@ export default function DataTable({ config, extra = [] }) {
 
   const filterTable = (value) => {
     const options = { equal: value, filter: searchConfig?.entity };
-    dispatch(erp.list({ entity, options }));
+    dispatch(erp.list({ entity, options, service }));
   };
 
   return (

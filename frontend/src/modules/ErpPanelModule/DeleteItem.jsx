@@ -13,7 +13,12 @@ export default function Delete({ config }) {
     deleteModalLabels,
     deleteMessage = 'Do you want delete : ',
     modalTitle = 'Remove Item',
+    service,
+    disableDelete = false,
   } = config;
+  if (disableDelete) {
+    return null;
+  }
   const dispatch = useDispatch();
   const { current, isLoading, isSuccess } = useSelector(selectDeletedItem);
   const { state, erpContextAction } = useErpContext();
@@ -25,7 +30,7 @@ export default function Delete({ config }) {
     if (isSuccess) {
       modal.close();
       const options = { page: 1, items: 10 };
-      dispatch(erp.list({ entity, options }));
+      dispatch(erp.list({ entity, options, service }));
     }
     if (current) {
       let labels = deleteModalLabels.map((x) => valueByString(current, x)).join(' ');
@@ -36,7 +41,7 @@ export default function Delete({ config }) {
 
   const handleOk = () => {
     const id = current._id;
-    dispatch(erp.delete({ entity, id }));
+    dispatch(erp.delete({ entity, id, service }));
     modal.close();
   };
   const handleCancel = () => {

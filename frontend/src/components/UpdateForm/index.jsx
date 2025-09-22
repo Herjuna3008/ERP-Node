@@ -12,7 +12,7 @@ import { Button, Form } from 'antd';
 import Loading from '@/components/Loading';
 
 export default function UpdateForm({ config, formElements, withUpload = false }) {
-  let { entity } = config;
+  let { entity, service } = config;
   const translate = useLanguage();
   const dispatch = useDispatch();
   const { current, isLoading, isSuccess } = useSelector(selectUpdatedItem);
@@ -40,7 +40,7 @@ export default function UpdateForm({ config, formElements, withUpload = false })
     //   acc[key] = typeof fieldsValue[key] === 'string' ? fieldsValue[key].trim() : fieldsValue[key];
     //   return acc;
     // }, {});
-    dispatch(crud.update({ entity, id, jsonData: fieldsValue, withUpload }));
+    dispatch(crud.update({ entity, id, jsonData: fieldsValue, withUpload, service }));
   };
   useEffect(() => {
     if (current) {
@@ -93,7 +93,7 @@ export default function UpdateForm({ config, formElements, withUpload = false })
       panel.open();
       form.resetFields();
       dispatch(crud.resetAction({ actionType: 'update' }));
-      dispatch(crud.list({ entity }));
+      dispatch(crud.list({ entity, service }));
     }
   }, [isSuccess]);
 
