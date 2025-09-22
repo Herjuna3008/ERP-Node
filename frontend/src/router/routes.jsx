@@ -44,6 +44,15 @@ const Expense = lazy(() => import('@/pages/Expense'));
 const StockToBuy = lazy(() => import('@/pages/StockToBuy'));
 const Recap = lazy(() => import('@/pages/Recap'));
 
+const Product = lazy(() => import('@/pages/Product'));
+const Supplier = lazy(() => import('@/pages/Supplier'));
+const PurchaseInvoice = lazy(() => import('@/pages/PurchaseInvoice'));
+const StockLedger = lazy(() => import('@/pages/Stock/Ledger'));
+const ExpenseCategory = lazy(() => import('@/pages/Expense/Category'));
+const Expense = lazy(() => import('@/pages/Expense'));
+const StockToBuy = lazy(() => import('@/pages/PurchaseInvoice/StockToBuy'));
+const ReportsRecap = lazy(() => import('@/pages/Reports/Recap'));
+
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
@@ -156,7 +165,7 @@ let routes = {
     },
     {
       path: '/reports/recap',
-      element: <Recap />,
+      element: <ReportsRecap />,
     },
 
     {
