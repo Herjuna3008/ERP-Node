@@ -18,6 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { settingsAction } from '@/redux/settings/actions';
 // import { StatusTag } from '@/components/Tag';
+import { computeItemTotals, computeInvoiceTotals } from '@/utils/invoiceCalculations';
 
 function SaveForm({ form, translate }) {
   const handelClick = () => {
@@ -69,11 +70,8 @@ export default function UpdateItem({ config, UpdateForm }) {
     if (items) {
       items.map((item) => {
         if (item) {
-          if (item.quantity && item.price) {
-            let total = calculate.multiply(item['quantity'], item['price']);
-            //sub total
-            subTotal = calculate.add(subTotal, total);
-          }
+          const { total } = computeItemTotals(item);
+          subTotal = calculate.add(subTotal, total);
         }
       });
       setSubTotal(subTotal);
@@ -82,32 +80,38 @@ export default function UpdateItem({ config, UpdateForm }) {
 
   const onSubmit = (fieldsValue) => {
     let dataToUpdate = { ...fieldsValue };
-    if (fieldsValue) {
-      if (fieldsValue.date || fieldsValue.expiredDate || fieldsValue.dueDate) {
-        if (fieldsValue.date) {
-          dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-        }
-        if (fieldsValue.expiredDate) {
-          dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format(
-            'YYYY-MM-DDTHH:mm:ss.SSSZ'
-          );
-        }
-        if (fieldsValue.dueDate) {
-          dataToUpdate.dueDate = dayjs(fieldsValue.dueDate).format(
-            'YYYY-MM-DDTHH:mm:ss.SSSZ'
-          );
-        }
+    if (!fieldsValue) {
+      return;
+    }
+    if (fieldsValue.date || fieldsValue.expiredDate || fieldsValue.dueDate) {
+      if (fieldsValue.date) {
+        dataToUpdate.date = dayjs(fieldsValue.date).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
       }
-      if (fieldsValue.items) {
-        let newList = [];
-        fieldsValue.items.map((item) => {
-          const { quantity, price, itemName, description } = item;
-          const total = item.quantity * item.price;
-          newList.push({ total, quantity, price, itemName, description });
-        });
-        dataToUpdate.items = newList;
+      if (fieldsValue.expiredDate) {
+        dataToUpdate.expiredDate = dayjs(fieldsValue.expiredDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      }
+      if (fieldsValue.dueDate) {
+        dataToUpdate.dueDate = dayjs(fieldsValue.dueDate).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
       }
     }
+
+    const taxValue = Number(fieldsValue.taxRate || 0);
+    const { items = [] } = fieldsValue;
+    const { items: normalizedItems, subTotal, discountAmount, taxTotal, total } = computeInvoiceTotals({
+      items,
+      globalDiscountType: fieldsValue.globalDiscountType,
+      globalDiscountValue: fieldsValue.globalDiscountValue,
+      taxRate: taxValue / 100,
+    });
+
+    dataToUpdate = {
+      ...dataToUpdate,
+      items: normalizedItems,
+      subTotal,
+      discount: discountAmount,
+      taxTotal,
+      total,
+    };
 
     dispatch(erp.update({ entity, id, jsonData: dataToUpdate }));
   };
