@@ -4,11 +4,11 @@ const { globSync } = require('glob');
 const fs = require('fs');
 const { generate: uniqueId } = require('shortid');
 const bcrypt = require('bcryptjs');
-const { AppDataSource } = require('../typeorm-data-source');
+const { AppDataSource, initializeDataSource } = require('../typeorm-data-source');
 
 async function setupApp() {
   try {
-    await AppDataSource.initialize();
+    await initializeDataSource();
     const Admin = AppDataSource.getRepository('Admin');
     const AdminPassword = AppDataSource.getRepository('AdminPassword');
     const Setting = AppDataSource.getRepository('Setting');

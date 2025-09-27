@@ -81,6 +81,33 @@ const AppDataSource = new DataSource({
     Expense,
     StockLedger,
   ],
+  migrations: [path.join(__dirname, 'migrations', '*.js')],
 });
 
-module.exports = { AppDataSource };
+let initializationPromise;
+
+const initializeDataSource = async () => {
+  if (AppDataSource.isInitialized) {
+    return AppDataSource;
+  }
+
+  if (!initializationPromise) {
+    initializationPromise = (async () => {
+      const dataSource = await AppDataSource.initialize();
+      const executedMigrations = await dataSource.runMigrations();
+      if (executedMigrations.length > 0) {
+        console.log(
+          'Executed migrations:',
+          executedMigrations.map((migration) => migration.name).join(', ')
+        );
+      }
+      return dataSource;
+    })().finally(() => {
+      initializationPromise = undefined;
+    });
+  }
+
+  return initializationPromise;
+};
+
+module.exports = { AppDataSource, initializeDataSource };
