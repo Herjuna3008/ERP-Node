@@ -40,3 +40,4 @@ export default function Expense() {
       config={config}
     />
   );
+}
