@@ -1,9 +1,9 @@
 require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
-const { AppDataSource } = require('../typeorm-data-source');
+const { AppDataSource, initializeDataSource } = require('../typeorm-data-source');
 
 async function deleteData() {
-  await AppDataSource.initialize();
+  await initializeDataSource();
   const Admin = AppDataSource.getRepository('Admin');
   const AdminPassword = AppDataSource.getRepository('AdminPassword');
   const Setting = AppDataSource.getRepository('Setting');
