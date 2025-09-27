@@ -94,6 +94,31 @@ const initializeDataSource = async () => {
   if (!initializationPromise) {
     initializationPromise = (async () => {
       const dataSource = await AppDataSource.initialize();
+      const queryRunner = dataSource.createQueryRunner();
+      let shouldSynchronize = false;
+      try {
+        const [schemaInfo] = await queryRunner.query(
+          "SELECT COUNT(*) AS tableCount FROM information_schema.tables WHERE table_schema = DATABASE()"
+        );
+        const rawCount = schemaInfo
+          ? schemaInfo.tableCount ?? Object.values(schemaInfo)[0]
+          : undefined;
+        const tableCount =
+          rawCount !== undefined ? parseInt(String(rawCount), 10) : NaN;
+        if (!Number.isFinite(tableCount) || tableCount === 0) {
+          shouldSynchronize = true;
+        }
+      } finally {
+        await queryRunner.release();
+      }
+
+      if (shouldSynchronize) {
+        console.log(
+          'Database schema is empty; running initial synchronize before applying migrations.'
+        );
+        await dataSource.synchronize();
+      }
+      
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {
         console.log(
