@@ -1,8 +1,8 @@
-const { AppDataSource } = require('../typeorm-data-source');
+const { AppDataSource, initializeDataSource } = require('../typeorm-data-source');
 
 async function run() {
   try {
-    await AppDataSource.initialize();
+    await initializeDataSource();
     const paymentModeRepo = AppDataSource.getRepository('PaymentMode');
     const count = await paymentModeRepo.count();
     if (count === 0) {
