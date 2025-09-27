@@ -1,5 +1,5 @@
 require('module-alias/register');
-const { AppDataSource } = require('./typeorm-data-source');
+const { AppDataSource, initializeDataSource } = require('./typeorm-data-source');
 
 // Make sure we are running node 7.6+
 const [major, minor] = process.versions.node.split('.').map(parseFloat);
@@ -13,7 +13,7 @@ require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
 
 // Initialize database connection then start server
-AppDataSource.initialize()
+initializeDataSource()
   .then(() => {
     console.log('Connected to MySQL');
     const app = require('./app');
