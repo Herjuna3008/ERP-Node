@@ -94,7 +94,6 @@ const initializeDataSource = async () => {
   if (!initializationPromise) {
     initializationPromise = (async () => {
       const dataSource = await AppDataSource.initialize();
-
       const queryRunner = dataSource.createQueryRunner();
       let shouldSynchronize = false;
       try {
@@ -119,7 +118,6 @@ const initializeDataSource = async () => {
         );
         await dataSource.synchronize();
       }
-
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {
         console.log(
