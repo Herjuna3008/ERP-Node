@@ -118,7 +118,6 @@ const initializeDataSource = async () => {
         );
         await dataSource.synchronize();
       }
-      
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {
         console.log(

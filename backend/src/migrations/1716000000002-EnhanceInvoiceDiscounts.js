@@ -1,4 +1,20 @@
 class EnhanceInvoiceDiscounts1716000000002 {
+  async tableExists(queryRunner, tableName) {
+    const result = await queryRunner.query(
+      'SELECT COUNT(*) AS tableCount FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+      [tableName]
+    );
+
+    const countValue =
+      result?.[0]?.tableCount ??
+      result?.[0]?.TABLECOUNT ??
+      (result?.[0] ? Object.values(result[0])[0] : 0);
+
+    const normalizedValue = countValue !== undefined ? String(countValue) : '0';
+    const tableCount = Number.parseInt(normalizedValue, 10);
+    return Number.isFinite(tableCount) && tableCount > 0;
+  }
+
   async columnExists(queryRunner, tableName, columnName) {
     const result = await queryRunner.query(
       'SELECT COUNT(*) AS columnCount FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
@@ -16,6 +32,13 @@ class EnhanceInvoiceDiscounts1716000000002 {
   }
 
   async addColumnIfMissing(queryRunner, tableName, columnName, definitionSql) {
+    if (!(await this.tableExists(queryRunner, tableName))) {
+      console.warn(
+        `Skipping column "${columnName}" on table "${tableName}" because the table does not exist.`
+      );
+      return;
+    }
+
     if (!(await this.columnExists(queryRunner, tableName, columnName))) {
       await queryRunner.query(`ALTER TABLE \`${tableName}\` ADD ${definitionSql}`);
     }
