@@ -1,8 +1,8 @@
-import { AppDataSource } from '../typeorm-data-source';
+import { AppDataSource, initializeDataSource } from '../typeorm-data-source';
 
 async function run() {
   try {
-    await AppDataSource.initialize();
+    await initializeDataSource();
     const productRepo = AppDataSource.getRepository('Product');
     const supplierRepo = AppDataSource.getRepository('Supplier');
 
