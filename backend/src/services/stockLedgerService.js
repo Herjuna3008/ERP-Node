@@ -15,23 +15,29 @@ const SOURCE_TYPES = {
   ADJUSTMENT: 'adjustment',
 };
 
+const toNumber = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  const numeric = Number(value);
+  return Number.isNaN(numeric) ? fallback : numeric;
+};
+
 const recalculateProductAggregates = async (productId) => {
   if (!productId) return null;
   const product = await ProductRepository.findOne({ where: { id: productId, removed: false } });
   if (!product) return null;
 
   const entries = await StockLedgerRepository.find({ where: { product: productId } });
-  let stockQuantity = 0;
-  let lastCostPrice = product.lastCostPrice || 0;
-  let lastSellPrice = product.lastSellPrice || 0;
+  let stockQuantity = toNumber(product.stockQuantity);
+  let lastCostPrice = toNumber(product.lastCostPrice);
+  let lastSellPrice = toNumber(product.lastSellPrice);
 
   entries.forEach((entry) => {
     if (entry.entryType === ENTRY_TYPES.IN) {
-      stockQuantity += entry.quantity;
-      lastCostPrice = entry.costPrice || lastCostPrice;
+      stockQuantity += toNumber(entry.quantity);
+      lastCostPrice = toNumber(entry.costPrice, lastCostPrice);
     } else if (entry.entryType === ENTRY_TYPES.OUT) {
-      stockQuantity -= entry.quantity;
-      lastSellPrice = entry.sellPrice || lastSellPrice;
+      stockQuantity -= toNumber(entry.quantity);
+      lastSellPrice = toNumber(entry.sellPrice, lastSellPrice);
     }
   });
 
