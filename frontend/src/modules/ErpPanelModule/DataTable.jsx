@@ -48,6 +48,7 @@ export default function DataTable({ config, extra = [] }) {
     searchConfig,
     service,
     disableActions = false,
+    allowedActions,
   } = config;
 
   const { DATATABLE_TITLE } = config;
@@ -59,7 +60,7 @@ export default function DataTable({ config, extra = [] }) {
   const { erpContextAction } = useErpContext();
   const { modal } = erpContextAction;
 
-  const items = disableActions
+  const baseItems = disableActions
     ? []
     : [
         {
@@ -89,18 +90,18 @@ export default function DataTable({ config, extra = [] }) {
         },
       ];
 
-  items = items.filter((item) => {
-    if (item.type === 'divider') return true;
-    if (!allowedActions) return true;
-    return allowedActions.includes(item.key);
-  });
-
-  items = items.filter((item, index, array) => {
-    if (item.type !== 'divider') return true;
-    const prev = array[index - 1];
-    const next = array[index + 1];
-    return prev && prev.type !== 'divider' && next && next.type !== 'divider';
-  });
+  const items = baseItems
+    .filter((item) => {
+      if (item.type === 'divider') return true;
+      if (!allowedActions) return true;
+      return allowedActions.includes(item.key);
+    })
+    .filter((item, index, array) => {
+      if (item.type !== 'divider') return true;
+      const prev = array[index - 1];
+      const next = array[index + 1];
+      return prev && prev.type !== 'divider' && next && next.type !== 'divider';
+    });
 
   const navigate = useNavigate();
 
