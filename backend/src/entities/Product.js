@@ -1,5 +1,14 @@
 const { EntitySchema } = require('typeorm');
 
+const decimalTransformer = {
+  to: (value) => (value === null || value === undefined ? 0 : value),
+  from: (value) => {
+    if (value === null || value === undefined) return 0;
+    const numberValue = Number(value);
+    return Number.isNaN(numberValue) ? 0 : numberValue;
+  },
+};
+
 module.exports = new EntitySchema({
   name: 'Product',
   tableName: 'products',
@@ -8,10 +17,28 @@ module.exports = new EntitySchema({
     name: { type: 'varchar', length: 255 },
     sku: { type: 'varchar', length: 100, nullable: true },
     unit: { type: 'varchar', length: 50, default: 'unit' },
-    price: { type: 'decimal', precision: 10, scale: 2, default: 0 },
-    stockQuantity: { type: 'float', default: 0 },
-    lastCostPrice: { type: 'float', default: 0 },
-    lastSellPrice: { type: 'float', default: 0 },
+    price: { type: 'decimal', precision: 10, scale: 2, default: 0, transformer: decimalTransformer },
+    stockQuantity: {
+      type: 'decimal',
+      precision: 12,
+      scale: 2,
+      default: 0,
+      transformer: decimalTransformer,
+    },
+    lastCostPrice: {
+      type: 'decimal',
+      precision: 10,
+      scale: 2,
+      default: 0,
+      transformer: decimalTransformer,
+    },
+    lastSellPrice: {
+      type: 'decimal',
+      precision: 10,
+      scale: 2,
+      default: 0,
+      transformer: decimalTransformer,
+    },
     description: { type: 'text', nullable: true },
     removed: { type: 'boolean', default: false },
     created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
