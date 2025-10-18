@@ -66,7 +66,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
-        const response = await request.list({ entity: 'products' });
+        const response = await request.list({ entity: 'product' });
         if (!ignore && response?.success && Array.isArray(response.result)) {
           setProducts(response.result);
         }
