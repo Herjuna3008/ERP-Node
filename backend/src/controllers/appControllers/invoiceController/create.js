@@ -4,6 +4,7 @@ const Model = AppDataSource.getRepository('Invoice');
 const { calculate } = require('@/helpers');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
+const { computeTotals } = require('@/services/invoiceCalculationService');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -19,30 +20,39 @@ const create = async (req, res) => {
     });
   }
 
-  const { items = [], taxRate = 0, discount = 0 } = value;
+  const {
+    items = [],
+    taxRate = 0,
+    globalDiscountType,
+    globalDiscountValue,
+  } = value;
 
-  // default
-  let subTotal = 0;
-  let taxTotal = 0;
-  let total = 0;
-
-  //Calculate the items array with subTotal, total, taxTotal
-  items.map((item) => {
-    let total = calculate.multiply(item['quantity'], item['price']);
-    //sub total
-    subTotal = calculate.add(subTotal, total);
-    //item total
-    item['total'] = total;
+  const {
+    items: normalizedItems,
+    subTotal,
+    discountAmount,
+    taxTotal,
+    total,
+    globalDiscountType: normalizedGlobalDiscountType,
+    globalDiscountValue: normalizedGlobalDiscountValue,
+    taxRate: normalizedTaxRate,
+  } = computeTotals({
+    items,
+    globalDiscountType,
+    globalDiscountValue,
+    taxRate,
   });
-  taxTotal = calculate.multiply(subTotal, taxRate / 100);
-  total = calculate.add(subTotal, taxTotal);
 
   body['subTotal'] = subTotal;
   body['taxTotal'] = taxTotal;
   body['total'] = total;
-  body['items'] = items;
+  body['items'] = normalizedItems;
+  body['discount'] = discountAmount;
+  body['globalDiscountType'] = normalizedGlobalDiscountType;
+  body['globalDiscountValue'] = normalizedGlobalDiscountValue;
+  body['taxRate'] = normalizedTaxRate;
 
-  let paymentStatus = calculate.sub(total, discount) === 0 ? 'PAID' : 'UNPAID';
+  let paymentStatus = calculate.sub(total, discountAmount) === 0 ? 'PAID' : 'UNPAID';
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;

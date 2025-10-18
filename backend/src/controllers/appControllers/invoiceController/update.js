@@ -5,6 +5,7 @@ const custom = require('@/controllers/pdfController');
 
 const { calculate } = require('@/helpers');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
+const { computeTotals } = require('@/services/invoiceCalculationService');
 const schema = require('./schemaValidate');
 
 const update = async (req, res) => {
@@ -24,7 +25,7 @@ const update = async (req, res) => {
 
   const { credit } = previousInvoice;
 
-  const { items = [], taxRate = 0, discount = 0 } = req.body;
+  const { items = [], taxRate, globalDiscountType, globalDiscountValue } = value;
 
   if (items.length === 0) {
     return res.status(400).json({
@@ -34,26 +35,30 @@ const update = async (req, res) => {
     });
   }
 
-  // default
-  let subTotal = 0;
-  let taxTotal = 0;
-  let total = 0;
-
-  //Calculate the items array with subTotal, total, taxTotal
-  items.map((item) => {
-    let total = calculate.multiply(item['quantity'], item['price']);
-    //sub total
-    subTotal = calculate.add(subTotal, total);
-    //item total
-    item['total'] = total;
+  const {
+    items: normalizedItems,
+    subTotal,
+    discountAmount,
+    taxTotal,
+    total,
+    globalDiscountType: normalizedGlobalDiscountType,
+    globalDiscountValue: normalizedGlobalDiscountValue,
+    taxRate: normalizedTaxRate,
+  } = computeTotals({
+    items,
+    globalDiscountType: globalDiscountType ?? previousInvoice.globalDiscountType,
+    globalDiscountValue: globalDiscountValue ?? previousInvoice.globalDiscountValue,
+    taxRate: typeof taxRate !== 'undefined' ? taxRate : previousInvoice.taxRate,
   });
-  taxTotal = calculate.multiply(subTotal, taxRate / 100);
-  total = calculate.add(subTotal, taxTotal);
 
   body['subTotal'] = subTotal;
   body['taxTotal'] = taxTotal;
   body['total'] = total;
-  body['items'] = items;
+  body['items'] = normalizedItems;
+  body['discount'] = discountAmount;
+  body['globalDiscountType'] = normalizedGlobalDiscountType;
+  body['globalDiscountValue'] = normalizedGlobalDiscountValue;
+  body['taxRate'] = normalizedTaxRate;
   body['pdf'] = 'invoice-' + req.params.id + '.pdf';
   if (body.hasOwnProperty('currency')) {
     delete body.currency;
@@ -61,7 +66,7 @@ const update = async (req, res) => {
   // Find document by id and updates with the required fields
 
   let paymentStatus =
-    calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
+    calculate.sub(total, discountAmount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
   body['paymentStatus'] = paymentStatus;
 
   Model.merge(previousInvoice, body);
