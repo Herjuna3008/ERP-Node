@@ -64,6 +64,12 @@ const getEntry = async (id) => {
   return StockLedgerRepository.findOne({ where: { id }, relations: ['product'] });
 };
 
+const normalizeQuantity = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return Math.abs(numeric);
+};
+
 const recordEntry = async ({
   productId,
   quantity,
@@ -75,16 +81,18 @@ const recordEntry = async ({
   sourceItemId = null,
   notes = null,
 }) => {
-  if (!productId || !quantity || !entryType || !sourceType || !sourceId) {
+  const normalizedQuantity = normalizeQuantity(quantity);
+
+  if (!productId || !normalizedQuantity || !entryType || !sourceType || !sourceId) {
     throw new Error('Invalid stock ledger payload');
   }
 
   const entry = StockLedgerRepository.create({
     product: productId,
-    quantity,
+    quantity: normalizedQuantity,
     entryType,
-    costPrice,
-    sellPrice,
+    costPrice: toNumber(costPrice, 0),
+    sellPrice: toNumber(sellPrice, 0),
     sourceType,
     sourceId,
     sourceItemId,
