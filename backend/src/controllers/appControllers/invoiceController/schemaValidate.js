@@ -35,6 +35,14 @@ const schema = Joi.object({
     .valid(...allowedDiscountTypes)
     .default('NONE'),
   globalDiscountValue: Joi.alternatives().try(Joi.number(), Joi.string()).default(0),
-});
+  subTotal: Joi.any().strip(),
+  taxTotal: Joi.any().strip(),
+  total: Joi.any().strip(),
+  paymentStatus: Joi.any().strip(),
+  pdf: Joi.any().strip(),
+  credit: Joi.any().strip(),
+  balance: Joi.any().strip(),
+}).unknown(true);
+
 
 module.exports = schema;
