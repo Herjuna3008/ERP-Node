@@ -44,4 +44,5 @@ const schema = Joi.object({
   balance: Joi.any().strip(),
 }).unknown(true);
 
+
 module.exports = schema;
