@@ -6,7 +6,7 @@ module.exports = new EntitySchema({
   columns: {
     id: { primary: true, type: 'int', generated: true },
     removed: { type: 'boolean', default: false },
-    createdBy: { type: 'int' },
+    createdBy: { type: 'int', nullable: true },
     number: { type: 'varchar', length: 191 },
     year: { type: 'int' },
     status: { type: 'varchar', length: 50, default: 'draft' },
