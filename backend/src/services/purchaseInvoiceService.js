@@ -225,9 +225,11 @@ const listPurchaseInvoices = async (params = {}) => {
   return { result, total };
 };
 
+const STOCK_TO_BUY_STATUSES = ['sent', 'confirmed', 'stock_to_buy', 'stock to buy', 'Stock To Buy'];
+
 const getStockToBuy = async () => {
   const invoices = await PurchaseInvoiceRepository.find({
-    where: { removed: false, status: In(['sent', 'confirmed']) },
+    where: { removed: false, status: In(STOCK_TO_BUY_STATUSES) },
     relations: ['items', 'items.product'],
   });
 

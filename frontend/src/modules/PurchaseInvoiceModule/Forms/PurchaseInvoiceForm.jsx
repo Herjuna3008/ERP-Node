@@ -11,7 +11,7 @@ import PurchaseItemRow from '../components/PurchaseItemRow';
 
 const { Text } = Typography;
 
-const STATUS_OPTIONS = ['draft', 'pending', 'sent', 'confirmed'];
+const STATUS_OPTIONS = ['draft', 'pending', 'sent', 'confirmed', 'stock_to_buy'];
 const DISCOUNT_OPTIONS = ['amount', 'percent'];
 
 export default function PurchaseInvoiceForm({ totals }) {
