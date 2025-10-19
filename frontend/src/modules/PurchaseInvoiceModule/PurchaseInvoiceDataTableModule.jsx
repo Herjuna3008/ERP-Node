@@ -44,6 +44,7 @@ export default function PurchaseInvoiceDataTableModule({ config }) {
     {
       title: translate('status'),
       dataIndex: 'status',
+      render: (value) => (value ? translate(value) : ''),
     },
   ];
 

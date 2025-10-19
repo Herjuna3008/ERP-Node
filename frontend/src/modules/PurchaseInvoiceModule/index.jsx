@@ -5,8 +5,10 @@ import purchaseInvoiceService from '@/services/purchaseInvoiceService';
 
 const statusOptions = [
   { value: 'draft', label: 'draft', color: 'default' },
+  { value: 'pending', label: 'pending', color: 'orange' },
   { value: 'sent', label: 'sent', color: 'blue' },
   { value: 'confirmed', label: 'confirmed', color: 'green' },
+  { value: 'stock_to_buy', label: 'stock_to_buy', color: 'volcano' },
   { value: 'paid', label: 'paid', color: 'gold' },
 ];
 

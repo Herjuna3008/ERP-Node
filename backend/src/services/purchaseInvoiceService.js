@@ -225,21 +225,41 @@ const listPurchaseInvoices = async (params = {}) => {
   return { result, total };
 };
 
-const STOCK_TO_BUY_STATUSES = ['sent', 'confirmed', 'stock_to_buy', 'stock to buy', 'Stock To Buy'];
+const normalizeStatusValue = (value = '') =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+const STOCK_TO_BUY_STATUSES = ['sent', 'confirmed', 'stock_to_buy'];
+
+const STOCK_TO_BUY_STATUS_ALIASES = Array.from(
+  new Set(
+    STOCK_TO_BUY_STATUSES.flatMap((status) => {
+      const spaced = status.replace(/_/g, ' ');
+      const pascal = spaced.replace(/\b\w/g, (char) => char.toUpperCase());
+      const upper = status.toUpperCase();
+      const snakePascal = pascal.replace(/\s+/g, '_');
+      return [status, spaced, pascal, upper, snakePascal, spaced.toLowerCase()];
+    })
+  )
+);
 
 const getStockToBuy = async () => {
   const invoices = await PurchaseInvoiceRepository.find({
-    where: { removed: false, status: In(STOCK_TO_BUY_STATUSES) },
+    where: { removed: false, status: In(STOCK_TO_BUY_STATUS_ALIASES) },
     relations: ['items', 'items.product'],
   });
 
   const grouped = new Map();
-  invoices.forEach((invoice) => {
-    (invoice.items || []).forEach((item) => {
-      if (!item.product) return;
-      const productId = item.product.id || item.product;
-      if (!grouped.has(productId)) {
-        grouped.set(productId, {
+  invoices
+    .filter((invoice) => STOCK_TO_BUY_STATUSES.includes(normalizeStatusValue(invoice.status)))
+    .forEach((invoice) => {
+      (invoice.items || []).forEach((item) => {
+        if (!item.product) return;
+        const productId = item.product.id || item.product;
+        if (!grouped.has(productId)) {
+          grouped.set(productId, {
           productId,
           productName: item.product.name || '',
           quantity: 0,
@@ -249,7 +269,6 @@ const getStockToBuy = async () => {
       const entry = grouped.get(productId);
       entry.quantity = calculate.add(entry.quantity, item.quantity);
     });
-  });
 
   const productIds = Array.from(grouped.keys());
   if (productIds.length) {
