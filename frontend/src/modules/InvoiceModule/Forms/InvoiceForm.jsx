@@ -196,6 +196,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
               options={[
                 { value: 'draft', label: translate('Draft') },
                 { value: 'pending', label: translate('Pending') },
+                { value: 'stock_to_buy', label: translate('stock_to_buy')},
                 { value: 'sent', label: translate('Sent') },
               ]}
             ></Select>

@@ -260,16 +260,16 @@ const getStockToBuy = async () => {
         const productId = item.product.id || item.product;
         if (!grouped.has(productId)) {
           grouped.set(productId, {
-          productId,
-          productName: item.product.name || '',
-          quantity: 0,
-          lastCostPrice: 0,
-        });
-      }
-      const entry = grouped.get(productId);
-      entry.quantity = calculate.add(entry.quantity, item.quantity);
+            productId,
+            productName: item.product.name || '',
+            quantity: 0,
+            lastCostPrice: 0,
+          });
+        }
+        const entry = grouped.get(productId);
+        entry.quantity = calculate.add(entry.quantity, item.quantity);
+      });
     });
-
   const productIds = Array.from(grouped.keys());
   if (productIds.length) {
     const lastPrices = await stockLedgerService.getLastPricesForProducts(productIds);
