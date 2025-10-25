@@ -52,7 +52,10 @@ export default function ItemRow({
           return;
         }
         setProductsLoading(true);
-        const response = await request.list({ entity: 'product' });
+        let response = await request.listAll({ entity: 'product' });
+        if (!(response?.success || Array.isArray(response?.result))) {
+          response = await request.list({ entity: 'product' });
+        }
         if (!ignore) {
           if (response?.success && Array.isArray(response.result)) {
             cachedProducts = response.result;

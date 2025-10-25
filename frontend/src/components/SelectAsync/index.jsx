@@ -24,7 +24,11 @@ const SelectAsync = ({
 
   const navigate = useNavigate();
 
-  const asyncList = () => {
+  const asyncList = async () => {
+    const response = await request.listAll({ entity });
+    if (response?.success || Array.isArray(response?.result)) {
+      return response;
+    }
     return request.list({ entity });
   };
   const { result, isLoading: fetchIsLoading, isSuccess } = useFetch(asyncList);
