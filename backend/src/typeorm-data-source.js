@@ -38,6 +38,15 @@ const getEnv = (keys, defaultValue = undefined) => {
   return defaultValue;
 };
 
+const getIntegerFromEnv = (keys, defaultValue) => {
+  const rawValue = getEnv(keys);
+  if (rawValue === undefined) {
+    return defaultValue;
+  }
+  const parsedValue = parseInt(rawValue, 10);
+  return Number.isFinite(parsedValue) ? parsedValue : defaultValue;
+};
+
 const connectionUrl = getEnv(['DATABASE_URL', 'DB_URL', 'MYSQL_URL']);
 
 // When a connection string is provided we let TypeORM parse it. Otherwise we
@@ -61,6 +70,14 @@ const connectionConfig = connectionUrl
 
 const AppDataSource = new DataSource({
   ...connectionConfig,
+  connectTimeout: getIntegerFromEnv(
+    ['DB_CONNECT_TIMEOUT', 'MYSQL_CONNECT_TIMEOUT'],
+    10000
+  ),
+  acquireTimeout: getIntegerFromEnv(
+    ['DB_ACQUIRE_TIMEOUT', 'MYSQL_ACQUIRE_TIMEOUT'],
+    10000
+  ),
   synchronize: false,
   logging: false,
   entities: [
@@ -86,6 +103,34 @@ const AppDataSource = new DataSource({
 
 let initializationPromise;
 
+const connectionRetryErrorCodes = new Set([
+  'PROTOCOL_CONNECTION_LOST',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'ESOCKETTIMEDOUT',
+  'EAI_AGAIN',
+  'ENOTFOUND',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+]);
+
+const shouldRetryConnection = (error) => {
+  let currentError = error;
+  while (currentError) {
+    if (currentError.code && connectionRetryErrorCodes.has(currentError.code)) {
+      return true;
+    }
+    currentError = currentError.cause;
+  }
+  return false;
+};
+
+const wait = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 const initializeDataSource = async () => {
   if (AppDataSource.isInitialized) {
     return AppDataSource;
@@ -93,7 +138,48 @@ const initializeDataSource = async () => {
 
   if (!initializationPromise) {
     initializationPromise = (async () => {
-      const dataSource = await AppDataSource.initialize();
+      const maxRetries = Math.max(
+        1,
+        getIntegerFromEnv(
+          ['DB_CONNECTION_RETRIES', 'MYSQL_CONNECTION_RETRIES'],
+          5
+        )
+      );
+      const retryDelayMs = Math.max(
+        0,
+        getIntegerFromEnv(['DB_RETRY_DELAY_MS', 'MYSQL_RETRY_DELAY_MS'], 2000)
+      );
+
+      let attempt = 0;
+      let lastError;
+      let dataSource;
+      while (attempt < maxRetries && !dataSource) {
+        attempt += 1;
+        try {
+          // Attempt to initialize the connection. If this succeeds we can exit
+          // the retry loop immediately.
+          dataSource = await AppDataSource.initialize();
+          lastError = undefined;
+          if (attempt > 1) {
+            console.log('Database connection established after retry.');
+          }
+        } catch (error) {
+          lastError = error;
+          if (!shouldRetryConnection(error) || attempt >= maxRetries) {
+            throw error;
+          }
+          console.warn(
+            `Database connection attempt ${attempt} failed (${error.code ||
+              error.message}). Retrying in ${retryDelayMs}ms...`
+          );
+          await wait(retryDelayMs);
+        }
+      }
+
+      if (!dataSource) {
+        throw lastError;
+      }
+
       const queryRunner = dataSource.createQueryRunner();
       let shouldSynchronize = false;
       try {
