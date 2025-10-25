@@ -21,12 +21,14 @@ const StockToBuyModule = () => {
     {
       title: translate('cost_price'),
       dataIndex: 'lastCostPrice',
-      render: (value) => moneyFormatter({ amount: value || 0, currency_code: 'NA' }),
+      render: (value, record) =>
+        moneyFormatter({ amount: value || 0, currency_code: record?.currency || 'NA' }),
     },
     {
       title: translate('sell_price'),
       dataIndex: 'lastSellPrice',
-      render: (value) => moneyFormatter({ amount: value || 0, currency_code: 'NA' }),
+      render: (value, record) =>
+        moneyFormatter({ amount: value || 0, currency_code: record?.currency || 'NA' }),
     },
   ];
 

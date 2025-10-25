@@ -11,10 +11,6 @@ const InvoiceCreate = lazy(() => import('@/pages/Invoice/InvoiceCreate.jsx'));
 const InvoiceRead = lazy(() => import('@/pages/Invoice/InvoiceRead.jsx'));
 const InvoiceUpdate = lazy(() => import('@/pages/Invoice/InvoiceUpdate.jsx'));
 const InvoiceRecordPayment = lazy(() => import('@/pages/Invoice/InvoiceRecordPayment.jsx'));
-const Quote = lazy(() => import('@/pages/Quote'));
-const QuoteCreate = lazy(() => import('@/pages/Quote/QuoteCreate.jsx'));
-const QuoteRead = lazy(() => import('@/pages/Quote/QuoteRead.jsx'));
-const QuoteUpdate = lazy(() => import('@/pages/Quote/QuoteUpdate.jsx'));
 const Payment = lazy(() => import('@/pages/Payment'));
 const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead.jsx'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate.jsx'));
@@ -75,22 +71,6 @@ let routes = {
     {
       path: '/invoice/pay/:id',
       element: <InvoiceRecordPayment />,
-    },
-    {
-      path: '/quote',
-      element: <Quote />,
-    },
-    {
-      path: '/quote/create',
-      element: <QuoteCreate />,
-    },
-    {
-      path: '/quote/read/:id',
-      element: <QuoteRead />,
-    },
-    {
-      path: '/quote/update/:id',
-      element: <QuoteUpdate />,
     },
     {
       path: '/payment',

@@ -356,6 +356,7 @@ const lang = {
   date: 'Date',
   sub_total: 'Sub Total',
   note: 'Note',
+  important: 'Important',
   offer_list: 'Offer List',
   add_new_offer: 'Add New Offer',
   year: 'Year',
