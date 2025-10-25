@@ -5,7 +5,11 @@ import errorHandler from '@/request/errorHandler';
 
 const { Option } = Select;
 
-const asyncList = (entity) => {
+const asyncList = async (entity) => {
+  const response = await request.listAll({ entity });
+  if (response?.success || Array.isArray(response?.result)) {
+    return response;
+  }
   return request.list({ entity });
 };
 
