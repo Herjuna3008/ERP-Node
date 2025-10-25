@@ -273,8 +273,7 @@ export default function ItemRow({
           </Form.Item>
         </Col>
         <Col xs={12} md={3}>
-          <Form.Item name={[field.name, 'quantity']} rules={[{ required: true }]}
->
+          <Form.Item name={[field.name, 'quantity']} rules={[{ required: true }]}>
             <InputNumber
               style={{ width: '100%' }}
               min={0}
@@ -284,8 +283,7 @@ export default function ItemRow({
           </Form.Item>
         </Col>
         <Col xs={12} md={3}>
-          <Form.Item name={[field.name, 'price']} rules={[{ required: true }]}
->
+          <Form.Item name={[field.name, 'price']} rules={[{ required: true }]}>
             <InputNumber
               className="moneyInput"
               min={0}
@@ -295,9 +293,9 @@ export default function ItemRow({
             />
           </Form.Item>
         </Col>
-        <Col xs={12} md={3}>
+        <Col xs={12} md={2}>
           <Form.Item name={[field.name, 'discountType']}>
-            <Select>
+            <Select style={{ width: '100%' }}>
               <Select.Option value="NONE">{translate('none')}</Select.Option>
               <Select.Option value="PERCENTAGE">{translate('percentage')}</Select.Option>
               <Select.Option value="FIXED">{translate('fixed_amount')}</Select.Option>
@@ -314,21 +312,28 @@ export default function ItemRow({
             />
           </Form.Item>
         </Col>
-        <Col xs={24} md={3}>
-          <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: '100%' }}>
+        <Col xs={24} md={4}>
+          <div
+            className="item-row-total"
+            style={{
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'stretch' : 'center',
+            }}
+          >
             <InputNumber
               readOnly
               className="moneyInput"
               value={lineTotal}
               min={0}
               controls={false}
+              style={{ flex: 1 }}
               addonAfter={money.currency_position === 'after' ? money.currency_symbol : undefined}
               addonBefore={money.currency_position === 'before' ? money.currency_symbol : undefined}
               formatter={(value) =>
                 money.amountFormatter({ amount: value, currency_code: money.currency_code })
               }
             />
-            <Space>
+            <Space style={{ flexShrink: 0 }}>
               <Button
                 icon={<HistoryOutlined />}
                 onClick={openPriceModal}
@@ -336,7 +341,7 @@ export default function ItemRow({
               />
               <Button danger type="text" icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
             </Space>
-          </Space>
+          </div>
           <Form.Item name={[field.name, 'total']} hidden>
             <InputNumber />
           </Form.Item>

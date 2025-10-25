@@ -5,3 +5,9 @@
 .moneyInput input {
   text-align: right;
 }
+
+.item-row-total {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}

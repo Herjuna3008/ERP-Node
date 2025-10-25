@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
-import { Form, Input, InputNumber, Button, Select, Divider, Row, Col } from 'antd';
+import { Form, Input, InputNumber, Button, Select, Divider, Row, Col, Tag } from 'antd';
 
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -237,7 +237,14 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
           </Form.Item>
         </Col>
         <Col className="gutter-row" span={10}>
-          <Form.Item label={translate('Note')} name="notes">
+          <Form.Item
+            label={
+              <span>
+                {translate('Note')} <Tag color="red">{translate('important')}</Tag>
+              </span>
+            }
+            name="notes"
+          >
             <Input />
           </Form.Item>
         </Col>
@@ -256,13 +263,13 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
         <Col xs={12} md={3}>
           <p>{translate('price')}</p>
         </Col>
-        <Col xs={12} md={3}>
+        <Col xs={12} md={2}>
           <p>{translate('discount_type')}</p>
         </Col>
         <Col xs={12} md={2}>
           <p>{translate('discount_value')}</p>
         </Col>
-        <Col xs={24} md={3}>
+        <Col xs={24} md={4}>
           <p>{translate('Total')}</p>
         </Col>
       </Row>
