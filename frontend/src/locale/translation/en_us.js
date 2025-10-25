@@ -383,6 +383,7 @@ const lang = {
   invoice_list: 'Invoice List',
   add_new_invoice: 'Add New Invoice',
   record_payment: 'Record Payment',
+  record_purchase: 'Record Purchase',
   tax_total: 'Tax Total',
   show_invoice: 'Show Invoice',
   payment_status: 'Payment Status',

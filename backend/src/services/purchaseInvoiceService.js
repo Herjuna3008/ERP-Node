@@ -264,6 +264,7 @@ const getStockToBuy = async () => {
             productName: item.product.name || '',
             quantity: 0,
             lastCostPrice: 0,
+            clients: [],
           });
         }
         const entry = grouped.get(productId);
