@@ -24,6 +24,36 @@ const ensureArray = (value) => {
   return [];
 };
 
+const normalizeClientNames = (value) => {
+  const names = new Set();
+
+  const append = (client) => {
+    if (client == null) return;
+    if (Array.isArray(client)) {
+      client.forEach(append);
+      return;
+    }
+    if (typeof client === 'string') {
+      const trimmed = client.trim();
+      if (trimmed) names.add(trimmed);
+      return;
+    }
+    if (typeof client === 'object') {
+      append(client.name);
+      append(client.fullName);
+      append(client.companyName);
+      append(client.company);
+      append(client.label);
+      append(client.clientName);
+      return;
+    }
+    append(String(client));
+  };
+
+  append(value);
+  return Array.from(names);
+};
+
 const fetchInvoicesWithStatus = async (status = 'stock_to_buy') => {
   const invoices = [];
   let page = 1;
@@ -57,6 +87,11 @@ const extractInvoiceEntries = (invoices = []) => {
   const entries = [];
   invoices.forEach((invoice) => {
     const items = ensureArray(invoice.items);
+    const clientNames = normalizeClientNames([
+      invoice?.client,
+      invoice?.clientName,
+      invoice?.clientLabel,
+    ]);
     items.forEach((item) => {
       const product = item?.product;
       const productId =
@@ -71,6 +106,7 @@ const extractInvoiceEntries = (invoices = []) => {
         lastSellPrice: toNumber(item?.price),
         lastCostPrice: toNumber(item?.costPrice),
         currency: invoice?.currency,
+        clients: clientNames,
       });
     });
   });
@@ -85,6 +121,7 @@ const normalizePurchaseEntries = (records = []) =>
     lastCostPrice: toNumber(entry?.lastCostPrice),
     lastSellPrice: toNumber(entry?.lastSellPrice),
     currency: entry?.currency,
+    clients: normalizeClientNames(entry?.clients),
   }));
 
 const mergeEntries = (entries = []) => {
@@ -108,6 +145,7 @@ const mergeEntries = (entries = []) => {
         lastCostPrice: toNumber(entry.lastCostPrice),
         lastSellPrice: toNumber(entry.lastSellPrice),
         currency: entry.currency,
+        clients: normalizeClientNames(entry.clients),
       });
       return;
     }
@@ -129,6 +167,7 @@ const mergeEntries = (entries = []) => {
     if ((current.productId === key || current.productId == null) && entry.productId) {
       current.productId = entry.productId;
     }
+    current.clients = normalizeClientNames([current.clients, entry.clients]);
   });
 
   return Array.from(grouped.values());

@@ -1,3 +1,6 @@
+import { Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
+
 import { ErpLayout } from '@/layout';
 import ErpPanel from '@/modules/ErpPanelModule';
 import useLanguage from '@/locale/useLanguage';
@@ -8,11 +11,24 @@ const StockToBuyModule = () => {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const entity = stockToBuyService.entity;
+  const navigate = useNavigate();
+
+  const handleRecordPurchase = () => {
+    navigate('/purchaseinvoice');
+  };
 
   const dataTableColumns = [
     {
       title: translate('product'),
       dataIndex: 'productName',
+    },
+    {
+      title: translate('client'),
+      dataIndex: 'clients',
+      render: (clients) => {
+        const names = Array.isArray(clients) ? clients.filter(Boolean) : [];
+        return names.length ? names.join(', ') : translate('none');
+      },
     },
     {
       title: translate('quantity'),
@@ -29,6 +45,17 @@ const StockToBuyModule = () => {
       dataIndex: 'lastSellPrice',
       render: (value, record) =>
         moneyFormatter({ amount: value || 0, currency_code: record?.currency || 'NA' }),
+    },
+    {
+      title: '',
+      dataIndex: 'actions',
+      key: 'actions',
+      align: 'right',
+      render: () => (
+        <Button type="primary" onClick={handleRecordPurchase}>
+          {translate('record_purchase')}
+        </Button>
+      ),
     },
   ];
 
