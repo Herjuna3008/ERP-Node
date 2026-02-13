@@ -42,7 +42,15 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
         jwtExpired: true,
       });
 
-    const { loggedSessions } = userPassword;
+    if (!userPassword)
+      return res.status(401).json({
+        success: false,
+        result: null,
+        message: "User password credentials doens't Exist, authorization denied.",
+        jwtExpired: true,
+      });
+
+    const loggedSessions = userPassword.loggedSessions || [];
 
     if (!loggedSessions.includes(token))
       return res.status(401).json({
