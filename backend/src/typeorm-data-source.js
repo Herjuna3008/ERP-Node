@@ -25,6 +25,31 @@ const Expense = require('./entities/Expense');
 const StockLedger = require('./entities/StockLedger');
 const { ensureBootstrapData } = require('./setup/bootstrapDefaults');
 
+
+function normalizeLegacyDateColumns(entities) {
+  for (const entity of entities) {
+    const columns = entity?.options?.columns;
+    if (!columns) continue;
+
+    for (const columnOptions of Object.values(columns)) {
+      if (!columnOptions || typeof columnOptions !== 'object') continue;
+      const isDateType =
+        typeof columnOptions.type === 'string' && columnOptions.type.toLowerCase() === 'date';
+      const hasCurrentTimestampDefault =
+        typeof columnOptions.default === 'function' &&
+        String(columnOptions.default()).toUpperCase() === 'CURRENT_TIMESTAMP';
+
+      if (!isDateType || !hasCurrentTimestampDefault) {
+        continue;
+      }
+
+      // MySQL 5.5 does not support CURRENT_TIMESTAMP default on DATE columns.
+      delete columnOptions.default;
+      columnOptions.legacyAutoDate = true;
+    }
+  }
+}
+
 function normalizeLegacyAuditColumns(entities) {
   for (const entity of entities) {
     const columns = entity?.options?.columns;
@@ -70,31 +95,54 @@ function normalizeLegacyAuditColumns(entities) {
 }
 
 
-async function ensureCreatedColumnTriggers(dataSource, entities) {
+async function ensureLegacyDateTriggers(dataSource, entities) {
   const queryRunner = dataSource.createQueryRunner();
   try {
     for (const entity of entities) {
       const tableName = entity?.options?.tableName;
       const createdColumn = entity?.options?.columns?.created;
-      if (!tableName || !createdColumn) continue;
+      const dateColumn = entity?.options?.columns?.date;
+      if (!tableName) continue;
 
-      const triggerName = `trg_${tableName}_set_created`;
-      const [triggerInfo] = await queryRunner.query(
-        'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
-        [triggerName]
-      );
+      if (createdColumn) {
+        const triggerName = `trg_${tableName}_set_created`;
+        const [triggerInfo] = await queryRunner.query(
+          'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
+          [triggerName]
+        );
 
-      const rawCount = triggerInfo
-        ? triggerInfo.triggerCount ?? Object.values(triggerInfo)[0]
-        : undefined;
-      const triggerCount = rawCount !== undefined ? parseInt(String(rawCount), 10) : 0;
-      if (Number.isFinite(triggerCount) && triggerCount > 0) {
-        continue;
+        const rawCount = triggerInfo
+          ? triggerInfo.triggerCount ?? Object.values(triggerInfo)[0]
+          : undefined;
+        const triggerCount = rawCount !== undefined ? parseInt(String(rawCount), 10) : 0;
+        if (!Number.isFinite(triggerCount) || triggerCount === 0) {
+          await queryRunner.query(
+            `CREATE TRIGGER \`${triggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`created\` = IFNULL(NEW.\`created\`, NOW())`
+          );
+        }
       }
 
-      await queryRunner.query(
-        `CREATE TRIGGER \`${triggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`created\` = IFNULL(NEW.\`created\`, NOW())`
+      const dateType =
+        typeof dateColumn?.type === 'string' && dateColumn.type.toLowerCase() === 'date';
+      const shouldAutoPopulateDate = dateColumn?.legacyAutoDate === true;
+      if (!dateType || !shouldAutoPopulateDate) continue;
+
+      const dateTriggerName = `trg_${tableName}_set_date`;
+      const [dateTriggerInfo] = await queryRunner.query(
+        'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
+        [dateTriggerName]
       );
+
+      const rawDateTriggerCount = dateTriggerInfo
+        ? dateTriggerInfo.triggerCount ?? Object.values(dateTriggerInfo)[0]
+        : undefined;
+      const dateTriggerCount =
+        rawDateTriggerCount !== undefined ? parseInt(String(rawDateTriggerCount), 10) : 0;
+      if (!Number.isFinite(dateTriggerCount) || dateTriggerCount === 0) {
+        await queryRunner.query(
+          `CREATE TRIGGER \`${dateTriggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`date\` = IFNULL(NEW.\`date\`, CURDATE())`
+        );
+      }
     }
   } finally {
     await queryRunner.release();
@@ -165,6 +213,7 @@ const entities = [
 ];
 
 normalizeLegacyAuditColumns(entities);
+normalizeLegacyDateColumns(entities);
 
 const AppDataSource = new DataSource({
   ...connectionConfig,
@@ -285,7 +334,7 @@ const initializeDataSource = async () => {
         );
         await dataSource.synchronize();
       }
-      await ensureCreatedColumnTriggers(dataSource, entities);
+      await ensureLegacyDateTriggers(dataSource, entities);
 
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {
