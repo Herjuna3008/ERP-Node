@@ -69,6 +69,27 @@ const connectionConfig = connectionUrl
       ),
     };
 
+const entities = [
+  Client,
+  Invoice,
+  Payment,
+  PaymentMode,
+  Quote,
+  Taxes,
+  Admin,
+  AdminPassword,
+  Setting,
+  Product,
+  Supplier,
+  PurchaseInvoice,
+  PurchaseInvoiceItem,
+  ExpenseCategory,
+  Expense,
+  StockLedger,
+];
+
+normalizeLegacyAuditColumns(entities);
+
 const AppDataSource = new DataSource({
   ...connectionConfig,
   connectTimeout: getIntegerFromEnv(
@@ -81,24 +102,7 @@ const AppDataSource = new DataSource({
   ),
   synchronize: false,
   logging: false,
-  entities: [
-    Client,
-    Invoice,
-    Payment,
-    PaymentMode,
-    Quote,
-    Taxes,
-    Admin,
-    AdminPassword,
-    Setting,
-    Product,
-    Supplier,
-    PurchaseInvoice,
-    PurchaseInvoiceItem,
-    ExpenseCategory,
-    Expense,
-    StockLedger,
-  ],
+  entities: entities,
   migrations: [path.join(__dirname, 'migrations', '*.js')],
 });
 
