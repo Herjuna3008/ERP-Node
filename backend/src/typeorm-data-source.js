@@ -33,19 +33,17 @@ function normalizeLegacyDateColumns(entities) {
 
     for (const columnOptions of Object.values(columns)) {
       if (!columnOptions || typeof columnOptions !== 'object') continue;
-      const isDateType =
-        typeof columnOptions.type === 'string' && columnOptions.type.toLowerCase() === 'date';
-      const hasCurrentTimestampDefault =
-        typeof columnOptions.default === 'function' &&
-        String(columnOptions.default()).toUpperCase() === 'CURRENT_TIMESTAMP';
+      const columnType =
+        typeof columnOptions.type === 'string' ? columnOptions.type.toLowerCase() : '';
+      const isDateType = columnType === 'date';
 
-      if (!isDateType || !hasCurrentTimestampDefault) {
+      if (!isDateType) {
         continue;
       }
 
-      // MySQL 5.5 does not support CURRENT_TIMESTAMP default on DATE columns.
-      delete columnOptions.default;
-      columnOptions.legacyAutoDate = true;
+      delete columnOptions.onUpdate;
+      columnOptions.default = () => "'2000-01-01'";
+      columnOptions.legacyAutoDate = false;
     }
   }
 }
@@ -58,94 +56,29 @@ function normalizeLegacyAuditColumns(entities) {
     for (const [columnName, columnOptions] of Object.entries(columns)) {
       if (!columnOptions || typeof columnOptions !== 'object') continue;
 
+      const columnType =
+        typeof columnOptions.type === 'string' ? columnOptions.type.toLowerCase() : '';
       const isAuditColumn = columnName === 'created' || columnName === 'updated';
       const usesSpecialDateMetadata = columnOptions.createDate || columnOptions.updateDate;
-      const usesTimestampType =
-        typeof columnOptions.type === 'string' && columnOptions.type.toLowerCase() === 'timestamp';
+      const isDateTimeType =
+        columnType === 'timestamp' || columnType === 'datetime' || columnType === 'date';
 
-      if (!isAuditColumn && !usesSpecialDateMetadata && !usesTimestampType) {
+      if (!isAuditColumn && !usesSpecialDateMetadata && !isDateTimeType) {
         continue;
       }
 
-      // Normalize audit columns for MySQL 5.5 compatibility:
-      // - DATETIME cannot use DEFAULT CURRENT_TIMESTAMP
-      // - only one TIMESTAMP column may use automatic CURRENT_TIMESTAMP behavior
-      columnOptions.type = 'timestamp';
       delete columnOptions.createDate;
       delete columnOptions.updateDate;
       delete columnOptions.precision;
+      delete columnOptions.onUpdate;
 
-      if (columnName === 'created') {
-        // Keep this as a regular timestamp column; a trigger will populate it.
-        columnOptions.nullable = true;
-        delete columnOptions.default;
-        delete columnOptions.onUpdate;
-        continue;
-      }
-
-      if (!columnOptions.default) {
-        columnOptions.default = () => 'CURRENT_TIMESTAMP';
-      }
-
-      if (columnName === 'updated') {
-        columnOptions.onUpdate = 'CURRENT_TIMESTAMP';
+      if (columnType === 'date') {
+        columnOptions.default = () => "'2000-01-01'";
+      } else {
+        columnOptions.type = 'datetime';
+        columnOptions.default = () => "'2000-01-01 00:00:00'";
       }
     }
-  }
-}
-
-
-async function ensureLegacyDateTriggers(dataSource, entities) {
-  const queryRunner = dataSource.createQueryRunner();
-  try {
-    for (const entity of entities) {
-      const tableName = entity?.options?.tableName;
-      const createdColumn = entity?.options?.columns?.created;
-      const dateColumn = entity?.options?.columns?.date;
-      if (!tableName) continue;
-
-      if (createdColumn) {
-        const triggerName = `trg_${tableName}_set_created`;
-        const [triggerInfo] = await queryRunner.query(
-          'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
-          [triggerName]
-        );
-
-        const rawCount = triggerInfo
-          ? triggerInfo.triggerCount ?? Object.values(triggerInfo)[0]
-          : undefined;
-        const triggerCount = rawCount !== undefined ? parseInt(String(rawCount), 10) : 0;
-        if (!Number.isFinite(triggerCount) || triggerCount === 0) {
-          await queryRunner.query(
-            `CREATE TRIGGER \`${triggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`created\` = IFNULL(NEW.\`created\`, NOW())`
-          );
-        }
-      }
-
-      const dateType =
-        typeof dateColumn?.type === 'string' && dateColumn.type.toLowerCase() === 'date';
-      const shouldAutoPopulateDate = dateColumn?.legacyAutoDate === true;
-      if (!dateType || !shouldAutoPopulateDate) continue;
-
-      const dateTriggerName = `trg_${tableName}_set_date`;
-      const [dateTriggerInfo] = await queryRunner.query(
-        'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
-        [dateTriggerName]
-      );
-
-      const rawDateTriggerCount = dateTriggerInfo
-        ? dateTriggerInfo.triggerCount ?? Object.values(dateTriggerInfo)[0]
-        : undefined;
-      const dateTriggerCount =
-        rawDateTriggerCount !== undefined ? parseInt(String(rawDateTriggerCount), 10) : 0;
-      if (!Number.isFinite(dateTriggerCount) || dateTriggerCount === 0) {
-        await queryRunner.query(
-          `CREATE TRIGGER \`${dateTriggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`date\` = IFNULL(NEW.\`date\`, CURDATE())`
-        );
-      }
-    }
-  } finally {
-    await queryRunner.release();
   }
 }
 
@@ -334,7 +267,6 @@ const initializeDataSource = async () => {
         );
         await dataSource.synchronize();
       }
-      await ensureLegacyDateTriggers(dataSource, entities);
 
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {

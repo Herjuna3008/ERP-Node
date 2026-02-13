@@ -14,7 +14,7 @@ module.exports = new EntitySchema({
     email: { type: 'varchar', nullable: true },
     createdBy: { type: 'int', nullable: true },
     assigned: { type: 'int', nullable: true },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
   },
 });

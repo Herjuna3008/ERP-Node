@@ -12,7 +12,7 @@ module.exports = new EntitySchema({
     discountValue: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     sellPrice: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     total: { type: 'float' },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
   },
   relations: {
     invoice: {

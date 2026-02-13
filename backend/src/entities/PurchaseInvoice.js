@@ -20,8 +20,8 @@ module.exports = new EntitySchema({
     globalDiscountType: { type: 'varchar', length: 20, default: 'amount' },
     notes: { type: 'text', nullable: true },
     currency: { type: 'varchar', length: 10, default: 'NA' },
-    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
   },
   relations: {
     supplier: {
