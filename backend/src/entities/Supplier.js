@@ -10,7 +10,7 @@ module.exports = new EntitySchema({
     phone: { type: 'varchar', length: 50, nullable: true },
     address: { type: 'varchar', length: 255, nullable: true },
     removed: { type: 'boolean', default: false },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
 });

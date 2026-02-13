@@ -12,8 +12,8 @@ module.exports = new EntitySchema({
     discountType: { type: 'varchar', length: 20, default: 'amount' },
     total: { type: 'float', default: 0 },
     removed: { type: 'boolean', default: false },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
   relations: {
     invoice: {

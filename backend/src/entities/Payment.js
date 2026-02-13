@@ -16,8 +16,8 @@ module.exports = new EntitySchema({
     ref: { type: 'varchar', nullable: true },
     description: { type: 'text', nullable: true },
     pdf: { type: 'varchar', nullable: true },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
   },
   relations: {
     invoice: {
