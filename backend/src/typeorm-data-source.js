@@ -42,12 +42,21 @@ function normalizeLegacyAuditColumns(entities) {
         continue;
       }
 
-      // Normalize to legacy-safe DATETIME columns so old MySQL/MariaDB variants
-      // do not receive generated SQL with fractional timestamp precision.
-      columnOptions.type = 'datetime';
+      // Normalize audit columns for MySQL 5.5 compatibility:
+      // - DATETIME cannot use DEFAULT CURRENT_TIMESTAMP
+      // - only one TIMESTAMP column may use automatic CURRENT_TIMESTAMP behavior
+      columnOptions.type = 'timestamp';
       delete columnOptions.createDate;
       delete columnOptions.updateDate;
       delete columnOptions.precision;
+
+      if (columnName === 'created') {
+        // Keep this as a regular timestamp column; a trigger will populate it.
+        columnOptions.nullable = true;
+        delete columnOptions.default;
+        delete columnOptions.onUpdate;
+        continue;
+      }
 
       if (!columnOptions.default) {
         columnOptions.default = () => 'CURRENT_TIMESTAMP';
@@ -57,6 +66,38 @@ function normalizeLegacyAuditColumns(entities) {
         columnOptions.onUpdate = 'CURRENT_TIMESTAMP';
       }
     }
+  }
+}
+
+
+async function ensureCreatedColumnTriggers(dataSource, entities) {
+  const queryRunner = dataSource.createQueryRunner();
+  try {
+    for (const entity of entities) {
+      const tableName = entity?.options?.tableName;
+      const createdColumn = entity?.options?.columns?.created;
+      if (!tableName || !createdColumn) continue;
+
+      const triggerName = `trg_${tableName}_set_created`;
+      const [triggerInfo] = await queryRunner.query(
+        'SELECT COUNT(*) AS triggerCount FROM information_schema.triggers WHERE trigger_schema = DATABASE() AND trigger_name = ?',
+        [triggerName]
+      );
+
+      const rawCount = triggerInfo
+        ? triggerInfo.triggerCount ?? Object.values(triggerInfo)[0]
+        : undefined;
+      const triggerCount = rawCount !== undefined ? parseInt(String(rawCount), 10) : 0;
+      if (Number.isFinite(triggerCount) && triggerCount > 0) {
+        continue;
+      }
+
+      await queryRunner.query(
+        `CREATE TRIGGER \`${triggerName}\` BEFORE INSERT ON \`${tableName}\` FOR EACH ROW SET NEW.\`created\` = IFNULL(NEW.\`created\`, NOW())`
+      );
+    }
+  } finally {
+    await queryRunner.release();
   }
 }
 
@@ -244,6 +285,8 @@ const initializeDataSource = async () => {
         );
         await dataSource.synchronize();
       }
+      await ensureCreatedColumnTriggers(dataSource, entities);
+
       const executedMigrations = await dataSource.runMigrations();
       if (executedMigrations.length > 0) {
         console.log(
