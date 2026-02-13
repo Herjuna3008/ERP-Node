@@ -13,7 +13,7 @@ module.exports = new EntitySchema({
     sourceId: { type: 'int' },
     sourceItemId: { type: 'int', nullable: true },
     notes: { type: 'text', nullable: true },
-    created: { type: 'timestamp', precision: 0, createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
   },
   relations: {
     product: {

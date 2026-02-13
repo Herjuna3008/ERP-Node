@@ -11,6 +11,6 @@ module.exports = new EntitySchema({
     description: { type: 'text', nullable: true },
     ref: { type: 'varchar', nullable: true },
     isDefault: { type: 'boolean', default: false },
-    created: { type: 'timestamp', precision: 0, createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
   },
 });
