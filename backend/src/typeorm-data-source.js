@@ -23,6 +23,7 @@ const PurchaseInvoiceItem = require('./entities/PurchaseInvoiceItem');
 const ExpenseCategory = require('./entities/ExpenseCategory');
 const Expense = require('./entities/Expense');
 const StockLedger = require('./entities/StockLedger');
+const { ensureBootstrapData } = require('./setup/bootstrapDefaults');
 
 // Collect environment variables using multiple fallbacks so that the
 // configuration works both with the legacy `DB_*` variables that this project
@@ -211,6 +212,11 @@ const initializeDataSource = async () => {
           executedMigrations.map((migration) => migration.name).join(', ')
         );
       }
+
+      await ensureBootstrapData(dataSource, {
+        createDemoAdmin: shouldSynchronize,
+      });
+
       return dataSource;
     })().finally(() => {
       initializationPromise = undefined;
