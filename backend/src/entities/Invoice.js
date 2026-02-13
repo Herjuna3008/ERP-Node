@@ -33,7 +33,7 @@ module.exports = new EntitySchema({
     status: { type: 'varchar', default: 'draft' },
     pdf: { type: 'varchar', nullable: true },
     files: { type: 'simple-json', nullable: true },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
   },
 });

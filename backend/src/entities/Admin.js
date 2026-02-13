@@ -12,7 +12,7 @@ module.exports = new EntitySchema({
     surname: { type: 'varchar', nullable: true },
     photo: { type: 'varchar', nullable: true },
     role: { type: 'varchar', default: 'owner' },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
 });

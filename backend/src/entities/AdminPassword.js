@@ -13,8 +13,8 @@ module.exports = new EntitySchema({
     emailVerified: { type: 'boolean', default: false },
     authType: { type: 'varchar', default: 'email' },
     loggedSessions: { type: 'simple-json', default: () => "'[]'" },
-    created: { type: 'timestamp', createDate: true, default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'timestamp', updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
   relations: {
     user: {
