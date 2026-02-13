@@ -9,15 +9,15 @@ module.exports = new EntitySchema({
     createdBy: { type: 'int' },
     number: { type: 'int' },
     client: { type: 'int' },
-    date: { type: 'date', default: () => 'CURRENT_TIMESTAMP' },
+    date: { type: 'date', default: () => "'2000-01-01'" },
     amount: { type: 'float' },
     currency: { type: 'varchar', default: 'NA' },
     paymentMode: { type: 'int', nullable: true },
     ref: { type: 'varchar', nullable: true },
     description: { type: 'text', nullable: true },
     pdf: { type: 'varchar', nullable: true },
-    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
   },
   relations: {
     invoice: {
