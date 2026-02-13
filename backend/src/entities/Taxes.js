@@ -10,6 +10,6 @@ module.exports = new EntitySchema({
     taxName: { type: 'varchar', length: 255 },
     taxValue: { type: 'float' },
     isDefault: { type: 'boolean', default: false },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    created: { type: 'timestamp', precision: 0, createDate: true, default: () => 'CURRENT_TIMESTAMP' },
   },
 });

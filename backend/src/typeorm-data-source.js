@@ -25,42 +25,6 @@ const Expense = require('./entities/Expense');
 const StockLedger = require('./entities/StockLedger');
 const { ensureBootstrapData } = require('./setup/bootstrapDefaults');
 
-const normalizeLegacyAuditColumns = (entities) => {
-  for (const entity of entities) {
-    const columns = entity?.options?.columns;
-    if (!columns) continue;
-
-    for (const [columnName, columnOptions] of Object.entries(columns)) {
-      if (!columnOptions || typeof columnOptions !== 'object') continue;
-
-      const isAuditColumn = columnName === 'created' || columnName === 'updated';
-      const usesSpecialDateMetadata = columnOptions.createDate || columnOptions.updateDate;
-      const usesTimestampType =
-        typeof columnOptions.type === 'string' && columnOptions.type.toLowerCase() === 'timestamp';
-
-      if (!isAuditColumn && !usesSpecialDateMetadata && !usesTimestampType) {
-        continue;
-      }
-
-      // Normalize to legacy-safe DATETIME columns so old MySQL/MariaDB variants
-      // do not receive generated SQL with fractional timestamp precision.
-      columnOptions.type = 'datetime';
-      delete columnOptions.createDate;
-      delete columnOptions.updateDate;
-      delete columnOptions.precision;
-
-      if (!columnOptions.default) {
-        columnOptions.default = () => 'CURRENT_TIMESTAMP';
-      }
-
-      if (columnName === 'updated') {
-        columnOptions.onUpdate = 'CURRENT_TIMESTAMP';
-      }
-    }
-  }
-};
-
-
 // Collect environment variables using multiple fallbacks so that the
 // configuration works both with the legacy `DB_*` variables that this project
 // historically used as well as the `MYSQL*` variables exposed by many hosting

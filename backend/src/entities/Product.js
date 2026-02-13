@@ -41,7 +41,7 @@ module.exports = new EntitySchema({
     },
     description: { type: 'text', nullable: true },
     removed: { type: 'boolean', default: false },
-    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
-    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
+    created: { type: 'timestamp', precision: 0, createDate: true, default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'timestamp', precision: 0, updateDate: true, default: () => 'CURRENT_TIMESTAMP' },
   },
 });
