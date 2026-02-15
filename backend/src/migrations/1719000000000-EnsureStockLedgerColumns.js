@@ -93,7 +93,7 @@ class EnsureStockLedgerColumns1719000000000 {
       queryRunner,
       tableName,
       'created',
-      "`created` timestamp NOT NULL DEFAULT '2000-01-01 00:00:00'"
+      "`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
     );
 
     await this.addColumnIfMissing(

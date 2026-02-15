@@ -9,8 +9,8 @@ module.exports = new EntitySchema({
     quantity: { type: 'decimal', precision: 12, scale: 2, default: 0 },
     costPrice: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     total: { type: 'decimal', precision: 12, scale: 2, default: 0 },
-    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
-    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
   relations: {
     purchaseInvoice: {

@@ -15,8 +15,8 @@ module.exports = new EntitySchema({
     // MySQL 5.5 does not allow defaults on TEXT/BLOB columns.
     // `simple-json` is persisted as TEXT, so keep it nullable and initialize in app code.
     loggedSessions: { type: 'simple-json', nullable: true },
-    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
-    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
   },
   relations: {
     user: {
