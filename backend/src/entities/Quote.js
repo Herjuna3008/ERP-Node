@@ -32,7 +32,7 @@ module.exports = new EntitySchema({
     isExpired: { type: 'boolean', default: false },
     pdf: { type: 'varchar', nullable: true },
     files: { type: 'simple-json', nullable: true },
-    updated: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
-    created: { type: 'datetime', default: () => "'2000-01-01 00:00:00'" },
+    updated: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' },
+    created: { type: 'datetime', default: () => 'CURRENT_TIMESTAMP' },
   },
 });
