@@ -88,6 +88,7 @@ export const resetPassword = async ({ resetPasswordData }) => {
 export const logout = async () => {
   axios.defaults.withCredentials = true;
   try {
+    // Clear local storage to remove any stored tokens or user data MUST ON LOGOUT FOR SECURITY IMPROVMENT
     // window.localStorage.clear();
     const response = await axios.post(API_BASE_URL + `logout?timestamp=${new Date().getTime()}`);
     const { status, data } = response;

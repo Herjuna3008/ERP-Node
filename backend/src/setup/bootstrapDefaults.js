@@ -22,7 +22,7 @@ const ensureBootstrapData = async (dataSource, options = {}) => {
     logger = console,
     adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@admin.com',
     adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
-    adminName = process.env.DEFAULT_ADMIN_NAME || 'IDURAR',
+    adminName = process.env.DEFAULT_ADMIN_NAME || 'CuanFlow Admin',
     adminSurname = process.env.DEFAULT_ADMIN_SURNAME || 'Admin',
   } = options;
 
