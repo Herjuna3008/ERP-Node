@@ -53,7 +53,7 @@ const create = async (req, res) => {
   body['globalDiscountValue'] = normalizedGlobalDiscountValue;
   body['taxRate'] = normalizedTaxRate;
 
-  let paymentStatus = calculate.sub(total, discountAmount) === 0 ? 'PAID' : 'UNPAID';
+  let paymentStatus = calculate.sub(total, discountAmount) === 0 ? 'paid' : 'unpaid';
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;

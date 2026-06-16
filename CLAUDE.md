@@ -87,13 +87,16 @@ Read the relevant service before changing a flow.
 - Before changing any flow, check the chain: **entity → service → controller → route → FE module → recap**.
 - Always reason about side effects on: invoice total, payment status, stock quantity, stock-ledger
   history, recap/profit.
-- Status string casing is inconsistent across modules (see HANDOVER bug **F**) — match the exact
-  casing the target module already uses; don't "normalize" globally without checking all readers.
+- Status casing convention (HANDOVER bug **F**, fixed): `invoice.paymentStatus` is canonical
+  **lowercase** `unpaid|paid|partially`; `invoice`/`purchaseInvoice` `status` are lowercase
+  (`draft|pending|sent`); `quote.status` is an UPPER enum (`DRAFT|SENT|CONVERTED`). Match the target
+  field's casing and don't "normalize" globally without checking all readers (FE `statusTagColor`,
+  `invoiceController/summary`, i18n keys).
 - Keep changes small and safe. When a fix needs a design decision (e.g. stock opening balance),
   surface it before editing.
 
 ## Known issues
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
 → Known Bugs**. Fixed: sales stock OUT (A), aggregate double-count (B), master-data RBAC (C),
-recap discount + converted-invoice visibility (D, E). Still open (low priority): status casing (F),
-overloaded `discount` field (G), orphan entities (H), FE-driven numbering (I).
+recap discount + converted-invoice visibility (D, E), paymentStatus casing (F). Still open
+(low priority): overloaded `discount` field (G), orphan entities (H), FE-driven numbering (I).
