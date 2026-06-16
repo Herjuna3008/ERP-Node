@@ -68,7 +68,8 @@ Everything under `/api` is auth-gated except the login/forget/reset routes in `c
    (invoiceController.payments). Recomputes invoice payment via
    `services/invoiceService.updateInvoicePayment`: `due = total - discount - paid` →
    `PAID | PARTIAL | UNPAID`, writes `credit` and `payment[]`.
-5. ⚠️ **No stock movement** happens anywhere in the sales chain (see bug A).
+5. Stock OUT is written when the invoice is committed (non-draft), via
+   `invoiceStockService.syncInvoiceStock` (was bug A, now fixed).
 
 ### Purchase → Stock IN
 `services/purchaseInvoiceService.js`:
@@ -82,10 +83,11 @@ Everything under `/api` is auth-gated except the login/forget/reset routes in `c
 ### Stock ledger & product aggregates
 `services/stockLedgerService.js`:
 - `recordEntry()` saves a ledger row then calls `recalculateProductAggregates()`.
-- `recalculateProductAggregates()` recomputes `stockQuantity / lastCostPrice / lastSellPrice`.
-  ⚠️ It initializes the running quantity from the **current** `product.stockQuantity` and then
-  re-adds the whole ledger → non-idempotent / double-counting (see bug B).
-- Manual adjustments go through `stockLedgerController` (source type `adjustment`).
+- `recalculateProductAggregates()` recomputes `stockQuantity / lastCostPrice / lastSellPrice` by
+  replaying the full ledger from zero (idempotent; was bug B, now fixed).
+- Manual adjustments go through `stockLedgerController` (source type `adjustment`). The custom
+  `productController` also emits `adjustment` entries for stock typed into the product form
+  (opening balance on create, signed delta on edit) so `stockQuantity` stays fully ledger-derived.
 
 ### Recap / profit
 `services/recapService.js`: for a date range, sums `invoice.total` (sales) and `purchaseInvoice.total`
@@ -130,24 +132,31 @@ Numbering is effectively frontend-driven (the client supplies `number`), not ser
 > Severity: 🔴 high (data/stock/security correctness) · 🟡 medium · 🔵 low/cleanup.
 > None have been fixed yet — this is a findings log.
 
-### 🔴 A. Sales invoices never decrement stock
-`ENTRY_TYPES.OUT` and `SOURCE_TYPES.SALES_INVOICE` are defined but have **zero callers** (only
-purchases write `IN`, plus manual adjustments). Selling goods does not reduce `stockQuantity` or
-write an `OUT` ledger row. Inventory only ever grows.
-- Files: `services/stockLedgerService.js`, `services/invoiceService.js`, `invoiceController/*`.
-- Fix direction: on sales invoice reaching `sent`/confirmed, write `OUT` ledger entries per item
-  (mirror `purchaseInvoiceService.applyStatusTransitionEffects`); reverse on un-send/delete. Needs a
-  decision on which status triggers stock-out and whether to block overselling.
+### 🔴 A. Sales invoices never decrement stock — ✅ FIXED
+`ENTRY_TYPES.OUT` and `SOURCE_TYPES.SALES_INVOICE` were defined but had **zero callers** (only
+purchases wrote `IN`, plus manual adjustments). Selling goods did not reduce `stockQuantity`.
+- **Fixed**: new `services/invoiceStockService.syncInvoiceStock(invoice)` writes `OUT` ledger
+  entries per line item when an invoice is **committed (any non-draft status — `pending`/`sent`)**,
+  and clears them otherwise. It is idempotent (remove-by-source, then re-add) and wired into
+  `invoiceController` create/update/remove and `quoteService` conversion. Trigger status = non-draft
+  (consistent with recap). Overselling is **allowed** (stock can go negative) — blocking is a
+  separate policy decision.
+- Limitation: only items with a `productId` move stock. Manual invoices always have one (the item
+  product picker is required), but quote line items carry no product link, so **converted invoices
+  do not decrement stock until edited** through the invoice form.
 
-### 🔴 B. `recalculateProductAggregates` double-counts stock
-`services/stockLedgerService.js:30` initializes `stockQuantity = product.stockQuantity` (the already
-stored aggregate) and then adds the **entire** ledger on top. Not idempotent: the 2nd ledger entry
-for a product already over-counts.
-- Fix direction: start the running total at `0` (or from an explicit opening balance) and sum the
-  full ledger. **Design decision needed**: `Product` has no `openingStock` column and
-  `productService.create` passes the raw body, so a manually entered initial `stockQuantity` would
-  be wiped on the first ledger event. Options: (a) add `openingStock` column, or (b) require initial
-  stock to be entered as an `adjustment` ledger entry and treat `stockQuantity` as fully derived.
+### 🔴 B. `recalculateProductAggregates` double-counts stock — ✅ FIXED
+`services/stockLedgerService.js` initialized `stockQuantity = product.stockQuantity` (the already
+stored aggregate) and then added the **entire** ledger on top. Not idempotent: the 2nd ledger entry
+for a product already over-counted.
+- **Fixed**: `recalculateProductAggregates` now starts the running total at `0` and replays the full
+  ledger (ordered ascending so `lastCost`/`lastSell` reflect the newest entry). The stock ledger is
+  the single source of truth.
+- **Design decision taken** (`stockQuantity` was dual-role: form input + derived aggregate): chose
+  *fully derived, no schema change*. A new custom `productController` (create/update) converts a
+  stock value typed in the product form into an `adjustment` ledger entry (opening stock on create;
+  a signed delta on edit), instead of writing the column directly. So the column is always derived
+  and the form UX is preserved.
 
 ### 🔴 C. Master-data RBAC is bypassed — ✅ FIXED
 RBAC (`owner`/`manager`) was only applied on the **REST** routes `/api/products`, `/api/suppliers`
@@ -204,16 +213,18 @@ per-(year) sequence allocation.
 ---
 
 ## 9. What's solid vs fragile
-**Solid**: auth/session lifecycle, purchase→stock IN idempotency, recap report structure, generic
-CRUD auto-wiring, MySQL legacy-compat bootstrap.
-**Fragile**: the sales↔inventory link (missing entirely), product aggregate math, master-data access
-control, and discount/total semantics across the different invoice creation paths.
+**Solid**: auth/session lifecycle, purchase→stock IN idempotency, sales→stock OUT (bug A) and the
+ledger-derived product aggregates (bug B), master-data access control (bug C), recap correctness
+(bugs D/E), generic CRUD auto-wiring, MySQL legacy-compat bootstrap.
+**Fragile / still open**: discount/total semantics across invoice creation paths (bug G), status
+casing (bug F), document numbering (bug I), and converted invoices not decrementing stock until
+edited (quote items have no product link).
 
 ## 10. Suggested fix order (safest first)
 1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
 2. ~~**C** — master-data RBAC. Security; choose one code path.~~ ✅ DONE
-3. **B then A** — stock pair, do together. B needs the opening-balance design decision first.
-4. **F, G, I, H** — consistency & cleanup.
+3. ~~**B then A** — stock pair, do together. B needs the opening-balance design decision first.~~ ✅ DONE
+4. **F, G, I, H** — consistency & cleanup. *(still open)*
 
 Always re-check the impact chain after any change:
 **invoice total → payment status → stock quantity → stock-ledger history → recap/profit.**
