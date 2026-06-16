@@ -45,12 +45,13 @@ cd frontend && npm run dev      # Vite, http://localhost:5173 (calls backend :88
 ➡️ **To add an entity**: create `entities/Foo.js` and it auto-gets generic CRUD. Add a custom
 controller dir only when you need business logic.
 
-### Three backends coexist (important)
-- **appApi** (`/api/<entity>/...`, action-suffix) — what the frontend actually calls.
+### Two API surfaces
+- **appApi** (`/api/<entity>/...`, action-suffix) — what the frontend calls for all ERP entities.
 - **coreApi** (admin, settings).
-- **masterDataRoutes** (`/api/products`, `/api/suppliers` — REST style, **with RBAC**). ⚠️ The
-  frontend uses the action-suffix `/api/product/*` path instead, so the REST+RBAC routes are
-  effectively dead and master-data RBAC is **not enforced in practice**. See HANDOVER bug **C**.
+- Master-data write protection: `product` / `supplier` **create/update/delete** are guarded by
+  `rbac(['owner','admin','manager'])` directly in `appApi.js` (reads stay open so invoice/quote item
+  pickers work for every role). The old dead REST `masterDataRoutes` (`/api/products`) and its
+  `masterData/*` controllers/services were **removed** — see HANDOVER bug **C**.
 
 ### Custom vs generic controllers
 Custom (have business logic): `invoice, quote, payment, purchaseinvoice, stockledger, recap`.
@@ -88,5 +89,5 @@ Read the relevant service before changing a flow.
 
 ## Known issues
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
-→ Known Bugs**. Headlines: sales don't decrement stock (A), product aggregate double-counts (B),
-master-data RBAC bypassed (C), sales global discount missing from `total`/recap (D, E).
+→ Known Bugs**. Still open: sales don't decrement stock (A), product aggregate double-counts (B).
+Fixed so far: master-data RBAC (C), recap discount overstatement + converted-invoice visibility (D, E).

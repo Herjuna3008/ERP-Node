@@ -149,15 +149,18 @@ for a product already over-counts.
   be wiped on the first ledger event. Options: (a) add `openingStock` column, or (b) require initial
   stock to be entered as an `adjustment` ledger entry and treat `stockQuantity` as fully derived.
 
-### 🔴 C. Master-data RBAC is bypassed
-RBAC (`owner`/`manager`) is only applied on the **REST** routes `/api/products`, `/api/suppliers`
+### 🔴 C. Master-data RBAC is bypassed — ✅ FIXED
+RBAC (`owner`/`manager`) was only applied on the **REST** routes `/api/products`, `/api/suppliers`
 (`routes/masterDataRoutes.js`). But the frontend and `appApi.js` use the **action-suffix** path
-`/api/product/*`, `/api/supplier/*`, which is generated as **generic CRUD with no RBAC**. So any
-authenticated admin (any role) can CRUD products/suppliers. Two parallel product/supplier code paths
-also exist (generic CRUD vs `masterData/*Service`).
-- Fix direction: either route the action-suffix product/supplier endpoints through RBAC, or remove
-  the dead REST routes and add an RBAC guard in the generic path for these entities. Pick one code
-  path and delete the other.
+`/api/product/*`, `/api/supplier/*`, generated as **generic CRUD with no RBAC**, so any authenticated
+admin (any role) could CRUD products/suppliers. Two parallel product/supplier code paths also existed
+(generic CRUD vs the dead `masterData/*Service`). The dead route's whitelist `['owner','manager']`
+also wrongly excluded the `admin` (super_admin) role.
+- **Fixed**: `appApi.js` now guards `product`/`supplier` **create/update/delete** with
+  `rbac(['owner','admin','manager'])` (the path the FE actually uses). **Reads stay open** so the
+  invoice/quote item pickers work for every role (incl. `employee`/`read_only`). The dead REST path
+  was removed entirely: `routes/masterDataRoutes.js`, `controllers/masterData/*`,
+  `services/masterData/*`, and its mount in `app.js`. One code path now, RBAC enforced.
 
 ### 🟡 D. Sales global discount is excluded from `invoice.total`, and recap reads it raw — ✅ FIXED
 `services/invoiceCalculationService.js:79` computes `total = subTotal + taxTotal` (the global
@@ -189,8 +192,9 @@ Quote uses UPPER (`SENT`, `CONVERTED`); invoice/purchase `status` use lower (`dr
 differs depending on how the invoice was created.
 
 ### 🔵 H. Orphan/dead surface
-`InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. The REST
-master-data routes (bug C) are dead. Consider removing to reduce confusion.
+`InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. Consider
+removing to reduce confusion. (The dead REST master-data routes were already removed as part of
+bug **C**.)
 
 ### 🔵 I. Document numbering is frontend-driven and collision-prone
 The client supplies `number`; `last_invoice_number` is incremented separately. Quote→invoice copies
@@ -207,7 +211,7 @@ control, and discount/total semantics across the different invoice creation path
 
 ## 10. Suggested fix order (safest first)
 1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
-2. **C** — master-data RBAC. Security; choose one code path.
+2. ~~**C** — master-data RBAC. Security; choose one code path.~~ ✅ DONE
 3. **B then A** — stock pair, do together. B needs the opening-balance design decision first.
 4. **F, G, I, H** — consistency & cleanup.
 
