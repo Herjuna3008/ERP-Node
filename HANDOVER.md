@@ -188,12 +188,21 @@ until their status was changed.
 - **Fixed**: `convertQuoteToInvoice` now sets `status: 'pending'` on the new invoice (a valid FE
   status value, meaning a real invoice awaiting payment), so it is counted by recap.
 
-### 🟡 F. Status / paymentStatus casing is inconsistent
-Quote uses UPPER (`SENT`, `CONVERTED`); invoice/purchase `status` use lower (`draft`, `sent`);
-`paymentStatus` mixes (entity default `UNPAID` upper, `quoteService` writes lowercase `unpaid`,
-`invoiceService` writes `UNPAID|PAID|PARTIAL`). Frontend equality checks are fragile.
-- Fix direction: define a canonical casing per field and normalize on write + read. Audit all
-  readers (FE included) before changing.
+### 🟡 F. Status / paymentStatus casing is inconsistent — ✅ FIXED
+`invoice.paymentStatus` was written in three different forms: `create.js` wrote `PAID`/`UNPAID`,
+`invoiceService.updateInvoicePayment` (the `/invoices/:id/payments` path) wrote `PAID|PARTIAL|UNPAID`,
+while `update.js`, `paymentController/*` and `quoteService` already wrote lowercase
+`paid|partially|unpaid`. The two payment-recording paths therefore disagreed, and the entity default
+was `UNPAID`. Readers expect **lowercase**: BE `invoiceController/summary.js` and the i18n keys, FE
+`utils/statusTagColor`.
+- **Fixed**: canonical `paymentStatus` casing is **lowercase `unpaid | paid | partially`**.
+  Normalized the three uppercase writers — `Invoice` entity default, `invoiceController/create.js`,
+  and `invoiceService.updateInvoicePayment` (also `PARTIAL` → `partially`). `summary.js` now compares
+  case-insensitively so legacy rows still count; FE `tagColor()` was already case-insensitive.
+- Out of scope: `quote.status` stays UPPER (`DRAFT|SENT|CONVERTED`) — it is a self-consistent enum;
+  `invoice`/`purchaseInvoice` `status` were already lowercase-consistent. Pre-existing DB rows with
+  uppercase `paymentStatus` are legacy data (no migration framework) — tags render fine via the
+  case-insensitive lookup; only raw-text displays of old rows stay uppercase.
 
 ### 🔵 G. The `discount` field is overloaded
 `invoiceController/create.js` sets `invoice.discount` = computed global-discount **amount**, while
@@ -224,7 +233,8 @@ edited (quote items have no product link).
 1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
 2. ~~**C** — master-data RBAC. Security; choose one code path.~~ ✅ DONE
 3. ~~**B then A** — stock pair, do together. B needs the opening-balance design decision first.~~ ✅ DONE
-4. **F, G, I, H** — consistency & cleanup. *(still open)*
+4. ~~**F** — paymentStatus casing.~~ ✅ DONE
+5. **G, I, H** — consistency & cleanup. *(still open)*
 
 Always re-check the impact chain after any change:
 **invoice total → payment status → stock quantity → stock-ledger history → recap/profit.**

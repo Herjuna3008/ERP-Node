@@ -26,7 +26,7 @@ module.exports = new EntitySchema({
     globalDiscountType: { type: 'varchar', length: 50, default: 'NONE' },
     globalDiscountValue: { type: 'decimal', precision: 10, scale: 2, default: 0 },
     payment: { type: 'simple-json', nullable: true },
-    paymentStatus: { type: 'varchar', default: 'UNPAID' },
+    paymentStatus: { type: 'varchar', default: 'unpaid' },
     isOverdue: { type: 'boolean', default: false },
     approved: { type: 'boolean', default: false },
     notes: { type: 'text', nullable: true },
