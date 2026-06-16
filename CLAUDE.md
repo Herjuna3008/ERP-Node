@@ -54,8 +54,10 @@ controller dir only when you need business logic.
   `masterData/*` controllers/services were **removed** — see HANDOVER bug **C**.
 
 ### Custom vs generic controllers
-Custom (have business logic): `invoice, quote, payment, purchaseinvoice, stockledger, recap`.
-Generic raw CRUD: `client, taxes, paymentmode, expense, expensecategory, product, supplier, …`.
+Custom (have business logic): `invoice, quote, payment, purchaseinvoice, stockledger, recap,
+product` (product's custom create/update turn a stock value typed in the form into an `adjustment`
+ledger entry — stock stays ledger-derived).
+Generic raw CRUD: `client, taxes, paymentmode, expense, expensecategory, supplier, …`.
 
 ### Business logic lives in services, not controllers
 `backend/src/services/*` is the source of truth for totals, stock, payment status, recap.
@@ -66,7 +68,10 @@ Read the relevant service before changing a flow.
   relations. `InvoiceItem` / `PurchaseItem` entities exist but are **unused/orphan**.
 - **Purchase docs** use real relations (`PurchaseInvoice` 1—* `PurchaseInvoiceItem`, cascade).
 - **Stock**: `stock_ledger` is the history of truth (`IN`/`OUT`). `Product.stockQuantity`,
-  `lastCostPrice`, `lastSellPrice` are aggregates recomputed from the ledger.
+  `lastCostPrice`, `lastSellPrice` are aggregates **derived** from the ledger by
+  `recalculateProductAggregates` (idempotent, replays from zero). Purchases write `IN` on `sent`;
+  sales write `OUT` when the invoice is non-draft (`invoiceStockService.syncInvoiceStock`); the
+  product form's stock value is captured as an `adjustment` entry. Don't write these columns directly.
 - **Auth/session**: JWT tokens are also stored in `AdminPassword.loggedSessions` (JSON array).
   Every request checks `token ∈ loggedSessions`; **logout removes the token** (real invalidation).
 
@@ -89,5 +94,6 @@ Read the relevant service before changing a flow.
 
 ## Known issues
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
-→ Known Bugs**. Still open: sales don't decrement stock (A), product aggregate double-counts (B).
-Fixed so far: master-data RBAC (C), recap discount overstatement + converted-invoice visibility (D, E).
+→ Known Bugs**. Fixed: sales stock OUT (A), aggregate double-count (B), master-data RBAC (C),
+recap discount + converted-invoice visibility (D, E). Still open (low priority): status casing (F),
+overloaded `discount` field (G), orphan entities (H), FE-driven numbering (I).

@@ -26,8 +26,15 @@ const recalculateProductAggregates = async (productId) => {
   const product = await ProductRepository.findOne({ where: { id: productId, removed: false } });
   if (!product) return null;
 
-  const entries = await StockLedgerRepository.find({ where: { product: productId } });
-  let stockQuantity = toNumber(product.stockQuantity);
+  // The stock ledger is the single source of truth. Replay the whole history from
+  // zero so this is idempotent. (Previously it started from the already-stored
+  // product.stockQuantity and re-added the entire ledger on every call -> double
+  // counting.) Order ascending so lastCost/lastSell reflect the newest entry.
+  const entries = await StockLedgerRepository.find({
+    where: { product: productId },
+    order: { created: 'ASC', id: 'ASC' },
+  });
+  let stockQuantity = 0;
   let lastCostPrice = toNumber(product.lastCostPrice);
   let lastSellPrice = toNumber(product.lastSellPrice);
 

@@ -1,4 +1,5 @@
 const { AppDataSource } = require('@/typeorm-data-source');
+const invoiceStockService = require('./invoiceStockService');
 
 const QuoteRepository = AppDataSource.getRepository('Quote');
 const InvoiceRepository = AppDataSource.getRepository('Invoice');
@@ -43,6 +44,10 @@ const convertQuoteToInvoice = async (id, adminId) => {
 
 
   const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
+
+  // Converted invoice is 'pending' (committed) — sync stock OUT. No-op for now since
+  // quote line items carry no productId, but keeps behaviour correct if that changes.
+  await invoiceStockService.syncInvoiceStock(invoice);
 
   quote.status = 'CONVERTED';
   if (Object.prototype.hasOwnProperty.call(quote, 'converted')) {
