@@ -159,21 +159,22 @@ also exist (generic CRUD vs `masterData/*Service`).
   the dead REST routes and add an RBAC guard in the generic path for these entities. Pick one code
   path and delete the other.
 
-### 🟡 D. Sales global discount is excluded from `invoice.total`, and recap reads it raw
+### 🟡 D. Sales global discount is excluded from `invoice.total`, and recap reads it raw — ✅ FIXED
 `services/invoiceCalculationService.js:79` computes `total = subTotal + taxTotal` (the global
 discount is computed but **not** subtracted). The system's convention is that net due =
 `total - discount` (used in `invoiceController/create.js` and `invoiceService.updateInvoicePayment`).
-But `recapService.getSalesData` sums raw `invoice.total`, so **recap sales are overstated** by the
+`recapService.getSalesData` summed raw `invoice.total`, so recap sales were overstated by the
 global discount amount.
-- Fix direction: either make `total` the net figure (and adjust the payment-due math + FE display),
-  or make recap use `total - discount`. Be consistent across invoice display, payment, and recap.
+- **Fixed**: `recapService.getSalesData` now uses net `total - discount` per invoice (sales side
+  only — purchase totals are already net). The gross-`total` convention was left unchanged to avoid
+  touching the payment-due math + FE display; revisit as part of bug G if a fuller cleanup is wanted.
 
-### 🟡 E. Converted quote→invoice is invisible to recap
-`quoteService.convertQuoteToInvoice` never sets the new invoice's `status`, so it defaults to
-`'draft'`. `recapService` filters `status != 'draft'`, so converted invoices don't appear in recap
-until their status is changed.
-- Fix direction: set an appropriate non-draft status on conversion (e.g. `pending`/`sent` per the
-  intended workflow).
+### 🟡 E. Converted quote→invoice is invisible to recap — ✅ FIXED
+`quoteService.convertQuoteToInvoice` never set the new invoice's `status`, so it defaulted to
+`'draft'`. `recapService` filters `status != 'draft'`, so converted invoices didn't appear in recap
+until their status was changed.
+- **Fixed**: `convertQuoteToInvoice` now sets `status: 'pending'` on the new invoice (a valid FE
+  status value, meaning a real invoice awaiting payment), so it is counted by recap.
 
 ### 🟡 F. Status / paymentStatus casing is inconsistent
 Quote uses UPPER (`SENT`, `CONVERTED`); invoice/purchase `status` use lower (`draft`, `sent`);
@@ -205,7 +206,7 @@ CRUD auto-wiring, MySQL legacy-compat bootstrap.
 control, and discount/total semantics across the different invoice creation paths.
 
 ## 10. Suggested fix order (safest first)
-1. **D + E** — recap correctness. Low blast radius, no schema change.
+1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
 2. **C** — master-data RBAC. Security; choose one code path.
 3. **B then A** — stock pair, do together. B needs the opening-balance design decision first.
 4. **F, G, I, H** — consistency & cleanup.

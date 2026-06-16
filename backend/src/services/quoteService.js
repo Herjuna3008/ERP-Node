@@ -34,6 +34,9 @@ const convertQuoteToInvoice = async (id, adminId) => {
     discount: quote.discount,
     notes: quote.notes,
     createdBy: adminId,
+    // Converted invoices must leave 'draft' so they appear in the recap report
+    // (recap filters out draft invoices). 'pending' = real invoice awaiting payment.
+    status: 'pending',
     paymentStatus: 'unpaid',
     credit: 0,
   };
