@@ -25,13 +25,19 @@ const getSalesData = async (startDate, endDate) => {
   const where = { removed: false, status: Not('draft') };
   if (period) where.date = period;
   const invoices = await InvoiceRepository.find({ where, order: { date: 'ASC', id: 'ASC' } });
-  const items = invoices.map((invoice) => ({
-    id: invoice.id,
-    number: invoice.number,
-    date: invoice.date,
-    client: invoice.client,
-    total: invoice.total,
-  }));
+  const items = invoices.map((invoice) => {
+    // Sales invoice `total` is gross (global discount is stored separately in `discount`
+    // and only subtracted at payment time). Net revenue = total - discount, matching
+    // invoiceService.updateInvoicePayment's due calculation. Purchases are already net.
+    const netTotal = Number(invoice.total || 0) - Number(invoice.discount || 0);
+    return {
+      id: invoice.id,
+      number: invoice.number,
+      date: invoice.date,
+      client: invoice.client,
+      total: netTotal,
+    };
+  });
   const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
   return { items, total };
 };
