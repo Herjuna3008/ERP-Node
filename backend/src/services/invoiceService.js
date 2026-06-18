@@ -15,11 +15,13 @@ const updateInvoicePayment = async (invoiceId) => {
   const payments = await PaymentRepository.find({ where: { invoice: invoiceId, removed: false } });
   const paid = payments.reduce((sum, p) => calculate.add(sum, p.amount), 0);
   const due = calculate.sub(calculate.sub(invoice.total, invoice.discount || 0), paid);
-  let status = 'UNPAID';
+  // Canonical paymentStatus casing is lowercase (matches FE statusTagColor,
+  // invoiceController/summary, and the i18n keys): 'unpaid' | 'paid' | 'partially'.
+  let status = 'unpaid';
   if (due <= 0) {
-    status = 'PAID';
+    status = 'paid';
   } else if (paid > 0) {
-    status = 'PARTIAL';
+    status = 'partially';
   }
   invoice.credit = paid;
   invoice.paymentStatus = status;

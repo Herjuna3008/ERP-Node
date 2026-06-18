@@ -4,12 +4,23 @@ const router = express.Router();
 
 const appControllers = require('@/controllers/appControllers');
 const { routesList } = require('@/models/utils');
+const rbac = require('@/middlewares/rbac');
+
+// Master-data entities whose mutations (create/update/delete) are restricted to
+// privileged roles. Reads stay open so operational flows that need the product /
+// supplier list (e.g. building an invoice or quote) keep working for every role.
+const MASTER_DATA_WRITE_ROLES = {
+  product: ['owner', 'admin', 'manager'],
+  supplier: ['owner', 'admin', 'manager'],
+};
 
 const routerApp = (entity, controller) => {
-  router.route(`/${entity}/create`).post(catchErrors(controller['create']));
+  const writeGuard = MASTER_DATA_WRITE_ROLES[entity] ? [rbac(MASTER_DATA_WRITE_ROLES[entity])] : [];
+
+  router.route(`/${entity}/create`).post(...writeGuard, catchErrors(controller['create']));
   router.route(`/${entity}/read/:id`).get(catchErrors(controller['read']));
-  router.route(`/${entity}/update/:id`).patch(catchErrors(controller['update']));
-  router.route(`/${entity}/delete/:id`).delete(catchErrors(controller['delete']));
+  router.route(`/${entity}/update/:id`).patch(...writeGuard, catchErrors(controller['update']));
+  router.route(`/${entity}/delete/:id`).delete(...writeGuard, catchErrors(controller['delete']));
   router.route(`/${entity}/search`).get(catchErrors(controller['search']));
   router.route(`/${entity}/list`).get(catchErrors(controller['list']));
   router.route(`/${entity}/listAll`).get(catchErrors(controller['listAll']));

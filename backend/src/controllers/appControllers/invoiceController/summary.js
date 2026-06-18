@@ -36,16 +36,17 @@ const summary = async (req, res) => {
     if (status === 'overdue') {
       count = invoices.filter((i) => i.expiredDate && i.expiredDate < new Date()).length;
     } else if (['paid', 'unpaid', 'partially'].includes(status)) {
-      count = invoices.filter((i) => i.paymentStatus === status).length;
+      // Compare case-insensitively so legacy rows with uppercase paymentStatus still count.
+      count = invoices.filter((i) => (i.paymentStatus || '').toLowerCase() === status).length;
     } else {
-      count = invoices.filter((i) => i.status === status).length;
+      count = invoices.filter((i) => (i.status || '').toLowerCase() === status).length;
     }
     const percentage = totalInvoices.count ? Math.round((count / totalInvoices.count) * 100) : 0;
     return { status, count, percentage };
   });
 
   const unpaid = invoices
-    .filter((i) => ['unpaid', 'partially'].includes(i.paymentStatus))
+    .filter((i) => ['unpaid', 'partially'].includes((i.paymentStatus || '').toLowerCase()))
     .reduce((acc, i) => acc + (i.total - i.credit), 0);
 
   const finalResult = {

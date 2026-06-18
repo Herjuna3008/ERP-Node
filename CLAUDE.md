@@ -45,16 +45,19 @@ cd frontend && npm run dev      # Vite, http://localhost:5173 (calls backend :88
 ➡️ **To add an entity**: create `entities/Foo.js` and it auto-gets generic CRUD. Add a custom
 controller dir only when you need business logic.
 
-### Three backends coexist (important)
-- **appApi** (`/api/<entity>/...`, action-suffix) — what the frontend actually calls.
+### Two API surfaces
+- **appApi** (`/api/<entity>/...`, action-suffix) — what the frontend calls for all ERP entities.
 - **coreApi** (admin, settings).
-- **masterDataRoutes** (`/api/products`, `/api/suppliers` — REST style, **with RBAC**). ⚠️ The
-  frontend uses the action-suffix `/api/product/*` path instead, so the REST+RBAC routes are
-  effectively dead and master-data RBAC is **not enforced in practice**. See HANDOVER bug **C**.
+- Master-data write protection: `product` / `supplier` **create/update/delete** are guarded by
+  `rbac(['owner','admin','manager'])` directly in `appApi.js` (reads stay open so invoice/quote item
+  pickers work for every role). The old dead REST `masterDataRoutes` (`/api/products`) and its
+  `masterData/*` controllers/services were **removed** — see HANDOVER bug **C**.
 
 ### Custom vs generic controllers
-Custom (have business logic): `invoice, quote, payment, purchaseinvoice, stockledger, recap`.
-Generic raw CRUD: `client, taxes, paymentmode, expense, expensecategory, product, supplier, …`.
+Custom (have business logic): `invoice, quote, payment, purchaseinvoice, stockledger, recap,
+product` (product's custom create/update turn a stock value typed in the form into an `adjustment`
+ledger entry — stock stays ledger-derived).
+Generic raw CRUD: `client, taxes, paymentmode, expense, expensecategory, supplier, …`.
 
 ### Business logic lives in services, not controllers
 `backend/src/services/*` is the source of truth for totals, stock, payment status, recap.
@@ -65,7 +68,10 @@ Read the relevant service before changing a flow.
   relations. `InvoiceItem` / `PurchaseItem` entities exist but are **unused/orphan**.
 - **Purchase docs** use real relations (`PurchaseInvoice` 1—* `PurchaseInvoiceItem`, cascade).
 - **Stock**: `stock_ledger` is the history of truth (`IN`/`OUT`). `Product.stockQuantity`,
-  `lastCostPrice`, `lastSellPrice` are aggregates recomputed from the ledger.
+  `lastCostPrice`, `lastSellPrice` are aggregates **derived** from the ledger by
+  `recalculateProductAggregates` (idempotent, replays from zero). Purchases write `IN` on `sent`;
+  sales write `OUT` when the invoice is non-draft (`invoiceStockService.syncInvoiceStock`); the
+  product form's stock value is captured as an `adjustment` entry. Don't write these columns directly.
 - **Auth/session**: JWT tokens are also stored in `AdminPassword.loggedSessions` (JSON array).
   Every request checks `token ∈ loggedSessions`; **logout removes the token** (real invalidation).
 
@@ -81,12 +87,16 @@ Read the relevant service before changing a flow.
 - Before changing any flow, check the chain: **entity → service → controller → route → FE module → recap**.
 - Always reason about side effects on: invoice total, payment status, stock quantity, stock-ledger
   history, recap/profit.
-- Status string casing is inconsistent across modules (see HANDOVER bug **F**) — match the exact
-  casing the target module already uses; don't "normalize" globally without checking all readers.
+- Status casing convention (HANDOVER bug **F**, fixed): `invoice.paymentStatus` is canonical
+  **lowercase** `unpaid|paid|partially`; `invoice`/`purchaseInvoice` `status` are lowercase
+  (`draft|pending|sent`); `quote.status` is an UPPER enum (`DRAFT|SENT|CONVERTED`). Match the target
+  field's casing and don't "normalize" globally without checking all readers (FE `statusTagColor`,
+  `invoiceController/summary`, i18n keys).
 - Keep changes small and safe. When a fix needs a design decision (e.g. stock opening balance),
   surface it before editing.
 
 ## Known issues
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
-→ Known Bugs**. Headlines: sales don't decrement stock (A), product aggregate double-counts (B),
-master-data RBAC bypassed (C), sales global discount missing from `total`/recap (D, E).
+→ Known Bugs**. Fixed: sales stock OUT (A), aggregate double-count (B), master-data RBAC (C),
+recap discount + converted-invoice visibility (D, E), paymentStatus casing (F), `discount` overload
+(G). Still open (low priority): orphan entities (H), FE-driven numbering (I).

@@ -1,4 +1,5 @@
 const { AppDataSource } = require('@/typeorm-data-source');
+const invoiceStockService = require('./invoiceStockService');
 
 const QuoteRepository = AppDataSource.getRepository('Quote');
 const InvoiceRepository = AppDataSource.getRepository('Invoice');
@@ -31,7 +32,14 @@ const convertQuoteToInvoice = async (id, adminId) => {
     taxTotal: quote.taxTotal,
     total: quote.total,
     currency: quote.currency,
-    discount: quote.discount,
+    // `invoice.discount` is canonically the global-discount AMOUNT derived from
+    // globalDiscountType/globalDiscountValue (net payable = total - discount). Quotes have no
+    // global-discount mechanism (quote.discount is unused/always 0), so a converted invoice
+    // carries no discount. Set all three explicitly so they stay consistent and edit-safe,
+    // instead of copying the dead quote.discount field.
+    discount: 0,
+    globalDiscountType: 'NONE',
+    globalDiscountValue: 0,
     notes: quote.notes,
     createdBy: adminId,
     // Converted invoices must leave 'draft' so they appear in the recap report
@@ -43,6 +51,10 @@ const convertQuoteToInvoice = async (id, adminId) => {
 
 
   const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
+
+  // Converted invoice is 'pending' (committed) — sync stock OUT. No-op for now since
+  // quote line items carry no productId, but keeps behaviour correct if that changes.
+  await invoiceStockService.syncInvoiceStock(invoice);
 
   quote.status = 'CONVERTED';
   if (Object.prototype.hasOwnProperty.call(quote, 'converted')) {

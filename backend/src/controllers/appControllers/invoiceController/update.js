@@ -6,6 +6,7 @@ const custom = require('@/controllers/pdfController');
 const { calculate } = require('@/helpers');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const { computeTotals } = require('@/services/invoiceCalculationService');
+const invoiceStockService = require('@/services/invoiceStockService');
 const schema = require('./schemaValidate');
 
 const update = async (req, res) => {
@@ -71,6 +72,9 @@ const update = async (req, res) => {
 
   Model.merge(previousInvoice, body);
   const result = await Model.save(previousInvoice);
+
+  // Re-sync stock OUT to the invoice's new items/status (idempotent).
+  await invoiceStockService.syncInvoiceStock(result);
 
   // Returning successful response
 

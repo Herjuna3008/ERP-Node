@@ -5,6 +5,7 @@ const { calculate } = require('@/helpers');
 const { increaseBySettingKey } = require('@/middlewares/settings');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const { computeTotals } = require('@/services/invoiceCalculationService');
+const invoiceStockService = require('@/services/invoiceStockService');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -52,7 +53,7 @@ const create = async (req, res) => {
   body['globalDiscountValue'] = normalizedGlobalDiscountValue;
   body['taxRate'] = normalizedTaxRate;
 
-  let paymentStatus = calculate.sub(total, discountAmount) === 0 ? 'PAID' : 'UNPAID';
+  let paymentStatus = calculate.sub(total, discountAmount) === 0 ? 'paid' : 'unpaid';
 
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;
@@ -61,7 +62,9 @@ const create = async (req, res) => {
   const fileId = 'invoice-' + result.id + '.pdf';
   result.pdf = fileId;
   const updateResult = await Model.save(result);
-  // Returning successful response
+
+  // Decrement stock (ledger OUT) when the invoice is committed (non-draft).
+  await invoiceStockService.syncInvoiceStock(updateResult);
 
   increaseBySettingKey({
     settingKey: 'last_invoice_number',

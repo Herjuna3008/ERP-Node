@@ -68,7 +68,8 @@ Everything under `/api` is auth-gated except the login/forget/reset routes in `c
    (invoiceController.payments). Recomputes invoice payment via
    `services/invoiceService.updateInvoicePayment`: `due = total - discount - paid` →
    `PAID | PARTIAL | UNPAID`, writes `credit` and `payment[]`.
-5. ⚠️ **No stock movement** happens anywhere in the sales chain (see bug A).
+5. Stock OUT is written when the invoice is committed (non-draft), via
+   `invoiceStockService.syncInvoiceStock` (was bug A, now fixed).
 
 ### Purchase → Stock IN
 `services/purchaseInvoiceService.js`:
@@ -82,10 +83,11 @@ Everything under `/api` is auth-gated except the login/forget/reset routes in `c
 ### Stock ledger & product aggregates
 `services/stockLedgerService.js`:
 - `recordEntry()` saves a ledger row then calls `recalculateProductAggregates()`.
-- `recalculateProductAggregates()` recomputes `stockQuantity / lastCostPrice / lastSellPrice`.
-  ⚠️ It initializes the running quantity from the **current** `product.stockQuantity` and then
-  re-adds the whole ledger → non-idempotent / double-counting (see bug B).
-- Manual adjustments go through `stockLedgerController` (source type `adjustment`).
+- `recalculateProductAggregates()` recomputes `stockQuantity / lastCostPrice / lastSellPrice` by
+  replaying the full ledger from zero (idempotent; was bug B, now fixed).
+- Manual adjustments go through `stockLedgerController` (source type `adjustment`). The custom
+  `productController` also emits `adjustment` entries for stock typed into the product form
+  (opening balance on create, signed delta on edit) so `stockQuantity` stays fully ledger-derived.
 
 ### Recap / profit
 `services/recapService.js`: for a date range, sums `invoice.total` (sales) and `purchaseInvoice.total`
@@ -130,34 +132,44 @@ Numbering is effectively frontend-driven (the client supplies `number`), not ser
 > Severity: 🔴 high (data/stock/security correctness) · 🟡 medium · 🔵 low/cleanup.
 > None have been fixed yet — this is a findings log.
 
-### 🔴 A. Sales invoices never decrement stock
-`ENTRY_TYPES.OUT` and `SOURCE_TYPES.SALES_INVOICE` are defined but have **zero callers** (only
-purchases write `IN`, plus manual adjustments). Selling goods does not reduce `stockQuantity` or
-write an `OUT` ledger row. Inventory only ever grows.
-- Files: `services/stockLedgerService.js`, `services/invoiceService.js`, `invoiceController/*`.
-- Fix direction: on sales invoice reaching `sent`/confirmed, write `OUT` ledger entries per item
-  (mirror `purchaseInvoiceService.applyStatusTransitionEffects`); reverse on un-send/delete. Needs a
-  decision on which status triggers stock-out and whether to block overselling.
+### 🔴 A. Sales invoices never decrement stock — ✅ FIXED
+`ENTRY_TYPES.OUT` and `SOURCE_TYPES.SALES_INVOICE` were defined but had **zero callers** (only
+purchases wrote `IN`, plus manual adjustments). Selling goods did not reduce `stockQuantity`.
+- **Fixed**: new `services/invoiceStockService.syncInvoiceStock(invoice)` writes `OUT` ledger
+  entries per line item when an invoice is **committed (any non-draft status — `pending`/`sent`)**,
+  and clears them otherwise. It is idempotent (remove-by-source, then re-add) and wired into
+  `invoiceController` create/update/remove and `quoteService` conversion. Trigger status = non-draft
+  (consistent with recap). Overselling is **allowed** (stock can go negative) — blocking is a
+  separate policy decision.
+- Limitation: only items with a `productId` move stock. Manual invoices always have one (the item
+  product picker is required), but quote line items carry no product link, so **converted invoices
+  do not decrement stock until edited** through the invoice form.
 
-### 🔴 B. `recalculateProductAggregates` double-counts stock
-`services/stockLedgerService.js:30` initializes `stockQuantity = product.stockQuantity` (the already
-stored aggregate) and then adds the **entire** ledger on top. Not idempotent: the 2nd ledger entry
-for a product already over-counts.
-- Fix direction: start the running total at `0` (or from an explicit opening balance) and sum the
-  full ledger. **Design decision needed**: `Product` has no `openingStock` column and
-  `productService.create` passes the raw body, so a manually entered initial `stockQuantity` would
-  be wiped on the first ledger event. Options: (a) add `openingStock` column, or (b) require initial
-  stock to be entered as an `adjustment` ledger entry and treat `stockQuantity` as fully derived.
+### 🔴 B. `recalculateProductAggregates` double-counts stock — ✅ FIXED
+`services/stockLedgerService.js` initialized `stockQuantity = product.stockQuantity` (the already
+stored aggregate) and then added the **entire** ledger on top. Not idempotent: the 2nd ledger entry
+for a product already over-counted.
+- **Fixed**: `recalculateProductAggregates` now starts the running total at `0` and replays the full
+  ledger (ordered ascending so `lastCost`/`lastSell` reflect the newest entry). The stock ledger is
+  the single source of truth.
+- **Design decision taken** (`stockQuantity` was dual-role: form input + derived aggregate): chose
+  *fully derived, no schema change*. A new custom `productController` (create/update) converts a
+  stock value typed in the product form into an `adjustment` ledger entry (opening stock on create;
+  a signed delta on edit), instead of writing the column directly. So the column is always derived
+  and the form UX is preserved.
 
-### 🔴 C. Master-data RBAC is bypassed
-RBAC (`owner`/`manager`) is only applied on the **REST** routes `/api/products`, `/api/suppliers`
+### 🔴 C. Master-data RBAC is bypassed — ✅ FIXED
+RBAC (`owner`/`manager`) was only applied on the **REST** routes `/api/products`, `/api/suppliers`
 (`routes/masterDataRoutes.js`). But the frontend and `appApi.js` use the **action-suffix** path
-`/api/product/*`, `/api/supplier/*`, which is generated as **generic CRUD with no RBAC**. So any
-authenticated admin (any role) can CRUD products/suppliers. Two parallel product/supplier code paths
-also exist (generic CRUD vs `masterData/*Service`).
-- Fix direction: either route the action-suffix product/supplier endpoints through RBAC, or remove
-  the dead REST routes and add an RBAC guard in the generic path for these entities. Pick one code
-  path and delete the other.
+`/api/product/*`, `/api/supplier/*`, generated as **generic CRUD with no RBAC**, so any authenticated
+admin (any role) could CRUD products/suppliers. Two parallel product/supplier code paths also existed
+(generic CRUD vs the dead `masterData/*Service`). The dead route's whitelist `['owner','manager']`
+also wrongly excluded the `admin` (super_admin) role.
+- **Fixed**: `appApi.js` now guards `product`/`supplier` **create/update/delete** with
+  `rbac(['owner','admin','manager'])` (the path the FE actually uses). **Reads stay open** so the
+  invoice/quote item pickers work for every role (incl. `employee`/`read_only`). The dead REST path
+  was removed entirely: `routes/masterDataRoutes.js`, `controllers/masterData/*`,
+  `services/masterData/*`, and its mount in `app.js`. One code path now, RBAC enforced.
 
 ### 🟡 D. Sales global discount is excluded from `invoice.total`, and recap reads it raw — ✅ FIXED
 `services/invoiceCalculationService.js:79` computes `total = subTotal + taxTotal` (the global
@@ -176,21 +188,39 @@ until their status was changed.
 - **Fixed**: `convertQuoteToInvoice` now sets `status: 'pending'` on the new invoice (a valid FE
   status value, meaning a real invoice awaiting payment), so it is counted by recap.
 
-### 🟡 F. Status / paymentStatus casing is inconsistent
-Quote uses UPPER (`SENT`, `CONVERTED`); invoice/purchase `status` use lower (`draft`, `sent`);
-`paymentStatus` mixes (entity default `UNPAID` upper, `quoteService` writes lowercase `unpaid`,
-`invoiceService` writes `UNPAID|PAID|PARTIAL`). Frontend equality checks are fragile.
-- Fix direction: define a canonical casing per field and normalize on write + read. Audit all
-  readers (FE included) before changing.
+### 🟡 F. Status / paymentStatus casing is inconsistent — ✅ FIXED
+`invoice.paymentStatus` was written in three different forms: `create.js` wrote `PAID`/`UNPAID`,
+`invoiceService.updateInvoicePayment` (the `/invoices/:id/payments` path) wrote `PAID|PARTIAL|UNPAID`,
+while `update.js`, `paymentController/*` and `quoteService` already wrote lowercase
+`paid|partially|unpaid`. The two payment-recording paths therefore disagreed, and the entity default
+was `UNPAID`. Readers expect **lowercase**: BE `invoiceController/summary.js` and the i18n keys, FE
+`utils/statusTagColor`.
+- **Fixed**: canonical `paymentStatus` casing is **lowercase `unpaid | paid | partially`**.
+  Normalized the three uppercase writers — `Invoice` entity default, `invoiceController/create.js`,
+  and `invoiceService.updateInvoicePayment` (also `PARTIAL` → `partially`). `summary.js` now compares
+  case-insensitively so legacy rows still count; FE `tagColor()` was already case-insensitive.
+- Out of scope: `quote.status` stays UPPER (`DRAFT|SENT|CONVERTED`) — it is a self-consistent enum;
+  `invoice`/`purchaseInvoice` `status` were already lowercase-consistent. Pre-existing DB rows with
+  uppercase `paymentStatus` are legacy data (no migration framework) — tags render fine via the
+  case-insensitive lookup; only raw-text displays of old rows stay uppercase.
 
-### 🔵 G. The `discount` field is overloaded
-`invoiceController/create.js` sets `invoice.discount` = computed global-discount **amount**, while
-`quoteService` sets it to the copied `quote.discount`. Same column, two meanings → payment-due math
-differs depending on how the invoice was created.
+### 🔵 G. The `discount` field is overloaded — ✅ FIXED
+`invoiceController/create.js`/`update.js` set `invoice.discount` = the computed global-discount
+**amount** (from `globalDiscountType`/`globalDiscountValue`), while `quoteService` copied the unused
+`quote.discount` (quotes have no discount UI/field, so it is always 0) without setting the global
+fields. Two write paths, two meanings for the same column.
+- **Fixed**: `invoice.discount` is now canonically *the global-discount amount derived from
+  `globalDiscountType`/`globalDiscountValue`*. Quote→invoice conversion no longer copies
+  `quote.discount`; it sets `discount: 0` + `globalDiscountType: 'NONE'` + `globalDiscountValue: 0`
+  explicitly, so the converted invoice's discount is consistent and survives later edits. Documented
+  the convention on the `Invoice` entity. Zero behavioural change today (quote.discount was always 0).
+- Still by design (not part of G): `total` stays GROSS and net payable = `total - discount` (the
+  fuller "make `total` net" refactor was deliberately deferred — see bug D).
 
 ### 🔵 H. Orphan/dead surface
-`InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. The REST
-master-data routes (bug C) are dead. Consider removing to reduce confusion.
+`InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. Consider
+removing to reduce confusion. (The dead REST master-data routes were already removed as part of
+bug **C**.)
 
 ### 🔵 I. Document numbering is frontend-driven and collision-prone
 The client supplies `number`; `last_invoice_number` is incremented separately. Quote→invoice copies
@@ -200,16 +230,20 @@ per-(year) sequence allocation.
 ---
 
 ## 9. What's solid vs fragile
-**Solid**: auth/session lifecycle, purchase→stock IN idempotency, recap report structure, generic
-CRUD auto-wiring, MySQL legacy-compat bootstrap.
-**Fragile**: the sales↔inventory link (missing entirely), product aggregate math, master-data access
-control, and discount/total semantics across the different invoice creation paths.
+**Solid**: auth/session lifecycle, purchase→stock IN idempotency, sales→stock OUT (bug A) and the
+ledger-derived product aggregates (bug B), master-data access control (bug C), recap correctness
+(bugs D/E), generic CRUD auto-wiring, MySQL legacy-compat bootstrap.
+**Fragile / still open**: discount/total semantics across invoice creation paths (bug G), status
+casing (bug F), document numbering (bug I), and converted invoices not decrementing stock until
+edited (quote items have no product link).
 
 ## 10. Suggested fix order (safest first)
 1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
-2. **C** — master-data RBAC. Security; choose one code path.
-3. **B then A** — stock pair, do together. B needs the opening-balance design decision first.
-4. **F, G, I, H** — consistency & cleanup.
+2. ~~**C** — master-data RBAC. Security; choose one code path.~~ ✅ DONE
+3. ~~**B then A** — stock pair, do together. B needs the opening-balance design decision first.~~ ✅ DONE
+4. ~~**F** — paymentStatus casing.~~ ✅ DONE
+5. ~~**G** — `discount` overload.~~ ✅ DONE
+6. **H, I** — cleanup (orphan entities) & server-side numbering. *(still open)*
 
 Always re-check the impact chain after any change:
 **invoice total → payment status → stock quantity → stock-ledger history → recap/profit.**
