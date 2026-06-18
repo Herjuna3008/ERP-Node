@@ -74,6 +74,9 @@ Read the relevant service before changing a flow.
   product form's stock value is captured as an `adjustment` entry. Don't write these columns directly.
 - **Auth/session**: JWT tokens are also stored in `AdminPassword.loggedSessions` (JSON array).
   Every request checks `token ∈ loggedSessions`; **logout removes the token** (real invalidation).
+- **Dates**: every `type: 'date'` column is MySQL `DATE` (date-only). `typeorm-data-source.js`
+  (`normalizeDateOnlyColumns`) attaches a transformer that coerces any written value (the FE sends
+  full ISO `…T…Z` timestamps) to `YYYY-MM-DD`. Don't re-add per-controller date parsing — see HANDOVER **J**.
 
 ### Frontend conventions
 - All API calls use the **action-suffix** shape via `request/request.js`
