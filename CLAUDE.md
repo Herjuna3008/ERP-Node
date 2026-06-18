@@ -98,5 +98,5 @@ Read the relevant service before changing a flow.
 ## Known issues
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
 → Known Bugs**. Fixed: sales stock OUT (A), aggregate double-count (B), master-data RBAC (C),
-recap discount + converted-invoice visibility (D, E), paymentStatus casing (F). Still open
-(low priority): overloaded `discount` field (G), orphan entities (H), FE-driven numbering (I).
+recap discount + converted-invoice visibility (D, E), paymentStatus casing (F), `discount` overload
+(G). Still open (low priority): orphan entities (H), FE-driven numbering (I).

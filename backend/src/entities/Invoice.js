@@ -19,9 +19,13 @@ module.exports = new EntitySchema({
     taxRate: { type: 'float', default: 0 },
     subTotal: { type: 'float', default: 0 },
     taxTotal: { type: 'float', default: 0 },
+    // `total` is GROSS (subTotal + tax); the global discount is NOT subtracted from it.
+    // Net payable = total - discount. (Kept this way intentionally; see HANDOVER bug D.)
     total: { type: 'float', default: 0 },
     currency: { type: 'varchar', default: 'NA' },
     credit: { type: 'float', default: 0 },
+    // `discount` = the global-discount AMOUNT, derived from globalDiscountType/globalDiscountValue
+    // by invoiceCalculationService. Don't set it independently of those two fields.
     discount: { type: 'float', default: 0 },
     globalDiscountType: { type: 'varchar', length: 50, default: 'NONE' },
     globalDiscountValue: { type: 'decimal', precision: 10, scale: 2, default: 0 },

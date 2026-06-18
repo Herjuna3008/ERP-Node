@@ -204,10 +204,18 @@ was `UNPAID`. Readers expect **lowercase**: BE `invoiceController/summary.js` an
   uppercase `paymentStatus` are legacy data (no migration framework) — tags render fine via the
   case-insensitive lookup; only raw-text displays of old rows stay uppercase.
 
-### 🔵 G. The `discount` field is overloaded
-`invoiceController/create.js` sets `invoice.discount` = computed global-discount **amount**, while
-`quoteService` sets it to the copied `quote.discount`. Same column, two meanings → payment-due math
-differs depending on how the invoice was created.
+### 🔵 G. The `discount` field is overloaded — ✅ FIXED
+`invoiceController/create.js`/`update.js` set `invoice.discount` = the computed global-discount
+**amount** (from `globalDiscountType`/`globalDiscountValue`), while `quoteService` copied the unused
+`quote.discount` (quotes have no discount UI/field, so it is always 0) without setting the global
+fields. Two write paths, two meanings for the same column.
+- **Fixed**: `invoice.discount` is now canonically *the global-discount amount derived from
+  `globalDiscountType`/`globalDiscountValue`*. Quote→invoice conversion no longer copies
+  `quote.discount`; it sets `discount: 0` + `globalDiscountType: 'NONE'` + `globalDiscountValue: 0`
+  explicitly, so the converted invoice's discount is consistent and survives later edits. Documented
+  the convention on the `Invoice` entity. Zero behavioural change today (quote.discount was always 0).
+- Still by design (not part of G): `total` stays GROSS and net payable = `total - discount` (the
+  fuller "make `total` net" refactor was deliberately deferred — see bug D).
 
 ### 🔵 H. Orphan/dead surface
 `InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. Consider
@@ -234,7 +242,8 @@ edited (quote items have no product link).
 2. ~~**C** — master-data RBAC. Security; choose one code path.~~ ✅ DONE
 3. ~~**B then A** — stock pair, do together. B needs the opening-balance design decision first.~~ ✅ DONE
 4. ~~**F** — paymentStatus casing.~~ ✅ DONE
-5. **G, I, H** — consistency & cleanup. *(still open)*
+5. ~~**G** — `discount` overload.~~ ✅ DONE
+6. **H, I** — cleanup (orphan entities) & server-side numbering. *(still open)*
 
 Always re-check the impact chain after any change:
 **invoice total → payment status → stock quantity → stock-ledger history → recap/profit.**

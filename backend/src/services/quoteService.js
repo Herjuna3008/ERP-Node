@@ -32,7 +32,14 @@ const convertQuoteToInvoice = async (id, adminId) => {
     taxTotal: quote.taxTotal,
     total: quote.total,
     currency: quote.currency,
-    discount: quote.discount,
+    // `invoice.discount` is canonically the global-discount AMOUNT derived from
+    // globalDiscountType/globalDiscountValue (net payable = total - discount). Quotes have no
+    // global-discount mechanism (quote.discount is unused/always 0), so a converted invoice
+    // carries no discount. Set all three explicitly so they stay consistent and edit-safe,
+    // instead of copying the dead quote.discount field.
+    discount: 0,
+    globalDiscountType: 'NONE',
+    globalDiscountValue: 0,
     notes: quote.notes,
     createdBy: adminId,
     // Converted invoices must leave 'draft' so they appear in the recap report
