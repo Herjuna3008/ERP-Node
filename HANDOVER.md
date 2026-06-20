@@ -227,6 +227,18 @@ The client supplies `number`; `last_invoice_number` is incremented separately. Q
 the quote's `number` verbatim. Concurrent creates can collide. Consider server-authoritative,
 per-(year) sequence allocation.
 
+### 🔴 J. MySQL `DATE` columns reject the frontend's ISO datetime strings — ✅ FIXED
+Saving an invoice failed with `Incorrect datetime value: '2026-06-18T03:28:18.047Z' for column
+'date'`. The dayjs date pickers serialize to a full ISO-8601 timestamp (date + time + `Z`), but
+`invoices.date` / `expiredDate` (and `quotes`, `payments`, `purchase_invoices`, `expenses` date
+columns) are MySQL `DATE` (date-only). The controllers persisted `req.body` verbatim, so MySQL (strict
+mode) rejected the format. Affected every `type: 'date'` column on any FE-driven create/update.
+- **Fixed centrally**: `typeorm-data-source.js` now attaches a write transformer to **every**
+  `type: 'date'` column (`normalizeDateOnlyColumns`) that coerces any incoming value (ISO string /
+  `Date` / `YYYY-MM-DD…`) to a plain `YYYY-MM-DD` before it reaches MySQL. One fix covers all entities
+  and all write paths; no controller changes. Verified end-to-end: a create with
+  `'2026-06-18T03:28:18.047Z'` now returns 200 and stores `2026-06-18`.
+
 ---
 
 ## 9. What's solid vs fragile

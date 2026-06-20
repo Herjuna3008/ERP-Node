@@ -26,6 +26,55 @@ const StockLedger = require('./entities/StockLedger');
 const { ensureBootstrapData } = require('./setup/bootstrapDefaults');
 
 
+// MySQL `DATE` columns reject full ISO datetime strings such as
+// '2026-06-18T03:28:18.047Z' ("Incorrect datetime value"). The frontend date
+// pickers (dayjs) serialize to exactly that. Attach a write transformer to every
+// `type: 'date'` column so any incoming value (ISO string / Date / 'YYYY-MM-DD')
+// is coerced to a plain 'YYYY-MM-DD' before it reaches MySQL.
+function coerceToDateOnly(value) {
+  if (value === null || value === undefined || value === '') return value;
+
+  const formatLocal = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? value : formatLocal(value);
+  }
+
+  const stringValue = String(value);
+  // Already starts with a date part (e.g. '2026-06-18' or '2026-06-18T03:28:18Z')
+  // -> keep that date part verbatim (avoids any timezone shift).
+  const isoMatch = stringValue.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoMatch) return isoMatch[1];
+
+  const parsed = new Date(stringValue);
+  return Number.isNaN(parsed.getTime()) ? value : formatLocal(parsed);
+}
+
+function normalizeDateOnlyColumns(entities) {
+  for (const entity of entities) {
+    const columns = entity?.options?.columns;
+    if (!columns) continue;
+
+    for (const columnOptions of Object.values(columns)) {
+      if (!columnOptions || typeof columnOptions !== 'object') continue;
+      const isDateType =
+        typeof columnOptions.type === 'string' && columnOptions.type.toLowerCase() === 'date';
+      // Don't clobber a column that already defines its own transformer.
+      if (!isDateType || columnOptions.transformer) continue;
+
+      columnOptions.transformer = {
+        to: coerceToDateOnly,
+        from: (value) => value,
+      };
+    }
+  }
+}
+
 function normalizeLegacyDateColumns(entities) {
   for (const entity of entities) {
     const columns = entity?.options?.columns;
@@ -214,6 +263,7 @@ const entities = [
 
 normalizeLegacyAuditColumns(entities);
 normalizeLegacyDateColumns(entities);
+normalizeDateOnlyColumns(entities);
 
 const AppDataSource = new DataSource({
   ...connectionConfig,
