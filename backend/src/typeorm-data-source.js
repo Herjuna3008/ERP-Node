@@ -8,7 +8,6 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
 const Client = require('./entities/Client');
 const Invoice = require('./entities/Invoice');
-const InvoiceItem = require('./entities/InvoiceItem');
 const Payment = require('./entities/Payment');
 const PaymentMode = require('./entities/PaymentMode');
 const Quote = require('./entities/Quote');

@@ -1,5 +1,6 @@
 const { AppDataSource } = require('@/typeorm-data-source');
 const invoiceStockService = require('./invoiceStockService');
+const { assignNextNumber } = require('./numberingService');
 
 const QuoteRepository = AppDataSource.getRepository('Quote');
 const InvoiceRepository = AppDataSource.getRepository('Invoice');
@@ -20,7 +21,9 @@ const convertQuoteToInvoice = async (id, adminId) => {
     return { error: 'Quote already converted' };
   }
   const invoiceData = {
-    number: quote.number,
+    // Number is assigned fresh from the invoice counter inside the transaction below — NOT copied
+    // from the quote (HANDOVER bug I: copying quote.number caused invoice-number collisions and
+    // left the invoice counter un-bumped).
     year: quote.year,
     content: quote.content,
     date: quote.date,
@@ -50,7 +53,15 @@ const convertQuoteToInvoice = async (id, adminId) => {
   };
 
 
-  const invoice = await InvoiceRepository.save(InvoiceRepository.create(invoiceData));
+  const invoice = await AppDataSource.transaction(async (manager) => {
+    const invoiceRepo = manager.getRepository('Invoice');
+    invoiceData.number = await assignNextNumber({
+      manager,
+      settingKey: 'last_invoice_number',
+      tableName: 'invoices',
+    });
+    return invoiceRepo.save(invoiceRepo.create(invoiceData));
+  });
 
   // Converted invoice is 'pending' (committed) — sync stock OUT. No-op for now since
   // quote line items carry no productId, but keeps behaviour correct if that changes.

@@ -1,11 +1,10 @@
 const { AppDataSource } = require('@/typeorm-data-source');
-const Model = AppDataSource.getRepository('Invoice');
 
 const { calculate } = require('@/helpers');
-const { increaseBySettingKey } = require('@/middlewares/settings');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
 const { computeTotals } = require('@/services/invoiceCalculationService');
 const invoiceStockService = require('@/services/invoiceStockService');
+const { assignNextNumber } = require('@/services/numberingService');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -58,17 +57,23 @@ const create = async (req, res) => {
   body['paymentStatus'] = paymentStatus;
   body['createdBy'] = req.admin.id;
 
-  let result = await Model.save(Model.create(body));
-  const fileId = 'invoice-' + result.id + '.pdf';
-  result.pdf = fileId;
-  const updateResult = await Model.save(result);
+  // Number is server-assigned (HANDOVER bug I): the frontend value is ignored. The counter bump
+  // and the invoice insert share one transaction + row lock so concurrent creates can never get
+  // the same number.
+  const updateResult = await AppDataSource.transaction(async (manager) => {
+    const invoiceRepo = manager.getRepository('Invoice');
+    body['number'] = await assignNextNumber({
+      manager,
+      settingKey: 'last_invoice_number',
+      tableName: 'invoices',
+    });
+    let result = await invoiceRepo.save(invoiceRepo.create(body));
+    result.pdf = 'invoice-' + result.id + '.pdf';
+    return invoiceRepo.save(result);
+  });
 
   // Decrement stock (ledger OUT) when the invoice is committed (non-draft).
   await invoiceStockService.syncInvoiceStock(updateResult);
-
-  increaseBySettingKey({
-    settingKey: 'last_invoice_number',
-  });
 
   // Returning successful response
   return res.status(200).json({

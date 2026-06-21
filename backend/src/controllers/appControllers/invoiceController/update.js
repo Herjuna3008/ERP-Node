@@ -64,6 +64,9 @@ const update = async (req, res) => {
   if (body.hasOwnProperty('currency')) {
     delete body.currency;
   }
+  // The invoice number is server-assigned at creation and immutable thereafter (HANDOVER bug I).
+  // Never let an edit overwrite it, regardless of what the client submits.
+  delete body.number;
   // Find document by id and updates with the required fields
 
   let paymentStatus =

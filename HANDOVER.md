@@ -58,12 +58,15 @@ Everything under `/api` is auth-gated except the login/forget/reset routes in `c
 ### Sales: Quote → Invoice → Payment
 1. **Quote** created (`status` enum `DRAFT|SENT|CONVERTED`).
 2. **Convert** (`/quotes/:id/convert` → `services/quoteService.js`): allowed only when
-   `status === 'SENT'` and not already converted. Copies number/items/totals into a new Invoice,
-   marks quote `CONVERTED`. ⚠️ Does **not** set the new invoice's `status` (see bug E) and copies
-   the quote `number` verbatim (see bug I).
+   `status === 'SENT'` and not already converted. Copies items/totals into a new Invoice (set to
+   `status: 'pending'`, bug E), assigns a **fresh** server-allocated invoice number via
+   `numberingService.assignNextNumber` (no longer copies the quote number — bug I), marks quote
+   `CONVERTED`.
 3. **Invoice create** (`controllers/appControllers/invoiceController/create.js`): recomputes totals
    via `services/invoiceCalculationService.js`, stores `items` as JSON, sets initial `paymentStatus`,
-   assigns pdf name, increments `last_invoice_number` setting.
+   assigns pdf name, and **allocates the invoice number server-side** via
+   `numberingService.assignNextNumber` (atomic counter + row lock; the FE-supplied number is ignored
+   — bug I).
 4. **Payment**: `/payment/create` (paymentController) or `/invoices/:id/payments`
    (invoiceController.payments). Recomputes invoice payment via
    `services/invoiceService.updateInvoicePayment`: `due = total - discount - paid` →
@@ -97,13 +100,16 @@ Also builds an XLSX export. ⚠️ Reads raw `invoice.total` (see bug D) and exc
 
 ### Settings & numbering
 `Setting(settingCategory, settingKey, settingValue: json)`. Seeded from
-`setup/defaultSettings/*.json`. `last_invoice_number` is incremented by `+1` after invoice create.
-Numbering is effectively frontend-driven (the client supplies `number`), not server-authoritative.
+`setup/defaultSettings/*.json`. `last_invoice_number` / `last_quote_number` hold the LAST issued
+number and are now **server-authoritative** (bug I, fixed): `numberingService.assignNextNumber`
+allocates `max(counter, MAX(live number)) + 1` under a pessimistic row lock in the same transaction as
+the document insert. The FE-supplied `number` is ignored on create and immutable on update. The
+counter is a single global sequence (not per-year).
 
 ## 6. Data model essentials
-- **Sales docs (`Invoice`, `Quote`)**: `items` is a `simple-json` blob, **not** a relation.
-  `InvoiceItem` / `PurchaseItem` entities and `purchaseInvoiceItemController` exist but are
-  **unused/orphan surface**.
+- **Sales docs (`Invoice`, `Quote`)**: `items` is a `simple-json` blob, **not** a relation. (The
+  orphan `InvoiceItem` / `PurchaseItem` entities and `purchaseInvoiceItemController` were removed —
+  bug **H**.)
 - **Purchase docs**: real relations, `PurchaseInvoice` 1—* `PurchaseInvoiceItem` (cascade).
 - **`stock_ledger`**: `entryType (IN/OUT)`, `quantity`, `costPrice`, `sellPrice`, `sourceType`,
   `sourceId`, `sourceItemId`, `product` (CASCADE), optional `invoice`/`purchaseInvoice` links.
@@ -217,15 +223,48 @@ fields. Two write paths, two meanings for the same column.
 - Still by design (not part of G): `total` stays GROSS and net payable = `total - discount` (the
   fuller "make `total` net" refactor was deliberately deferred — see bug D).
 
-### 🔵 H. Orphan/dead surface
-`InvoiceItem`, `PurchaseItem` entities and `purchaseInvoiceItemController` are unused. Consider
-removing to reduce confusion. (The dead REST master-data routes were already removed as part of
-bug **C**.)
+### 🔵 H. Orphan/dead surface — ✅ FIXED
+`InvoiceItem` and `PurchaseItem` entities and the `purchaseInvoiceItemController` were unused — and
+`PurchaseItem` was actively harmful: its file was globbed into `routesList` but the entity was never
+registered in the DataSource, so `/api/purchaseitem/*` was a latent broken route (`getRepository` on
+an unregistered entity → 500 on access). `purchaseInvoiceItemController` exposed standalone CRUD for
+`PurchaseInvoiceItem`, which the app only ever manages via the `PurchaseInvoice` cascade.
+- **Removed**: `entities/InvoiceItem.js` (also dropped its dead import in `typeorm-data-source.js`;
+  it was imported but never in the `entities` array), `entities/PurchaseItem.js`, and the
+  `controllers/appControllers/purchaseInvoiceItemController/` dir.
+- `models/utils/index.js` `coreExclusions` now drops `InvoiceItem` (file gone) and adds
+  `PurchaseInvoiceItem` so that real-relation entity keeps its table/cascade but gets **no** standalone
+  auto-wired route.
+- **Kept** (not orphan): the `PurchaseInvoiceItem` entity itself — it is a real `PurchaseInvoice`
+  1—* cascade relation and stays registered in the DataSource.
+- Verified: backend boots clean (no missing-module / `EntityMetadataNotFound`); the auto-wired route
+  set no longer contains `purchaseitem`, `purchaseinvoiceitem`, or `invoiceitem`; `purchaseinvoice`
+  and all other routes are unaffected.
+- No data risk: `invoice_items` / `purchase_items` were never registered, so synchronize never
+  created them; nothing wrote to them.
 
-### 🔵 I. Document numbering is frontend-driven and collision-prone
-The client supplies `number`; `last_invoice_number` is incremented separately. Quote→invoice copies
-the quote's `number` verbatim. Concurrent creates can collide. Consider server-authoritative,
-per-(year) sequence allocation.
+### 🔵 I. Document numbering is frontend-driven and collision-prone — ✅ FIXED
+The client supplied `number` (computed from the possibly-stale `last_invoice_number` setting and an
+editable form field); the controller persisted it verbatim and bumped the counter separately via the
+non-atomic `increaseBySettingKey` (read-modify-write → lost updates). Quote→invoice copied the quote's
+`number` verbatim **and** never bumped the invoice counter. Two concurrent creates could be handed the
+same number, with no DB uniqueness guard (and none addable: `synchronize:false`, no migrations).
+- **Fixed (server-authoritative numbering)**: new `services/numberingService.assignNextNumber`
+  computes `nextNumber = max(counter, MAX(live number)) + 1` under a **pessimistic row lock**
+  (`pessimistic_write` on the settings row) inside a transaction shared with the document insert, so
+  the counter bump and the row insert commit atomically and concurrent creates can never collide.
+  The `MAX(live number)` term (non-removed rows only) self-heals counter drift; soft-deleted rows are
+  ignored so stray deleted numbers can't poison the live sequence ("no reuse" on the normal path is
+  guaranteed by the monotonic counter).
+- `invoiceController/create` + `quoteController/create` now assign the number server-side and **ignore**
+  the FE value; `quoteService.convertQuoteToInvoice` assigns a fresh invoice number instead of copying
+  `quote.number`. `invoiceController/update` + `quoteController/update` `delete body.number` so the
+  number is immutable after creation. FE `InvoiceForm`/`QuoteForm` `number` field is now `disabled`
+  (display-only preview). Verified end-to-end: a create sending a bogus number returns 200 with the
+  server-assigned number; two back-to-back creates get sequential numbers; a removed row with number
+  990001 is correctly ignored.
+- **Still by design**: the counter is a single global sequence (not per-year). Per-year reset was not
+  introduced (would be a behaviour change); `year` remains metadata, `number` is globally monotonic.
 
 ### 🔴 J. MySQL `DATE` columns reject the frontend's ISO datetime strings — ✅ FIXED
 Saving an invoice failed with `Incorrect datetime value: '2026-06-18T03:28:18.047Z' for column
@@ -245,9 +284,8 @@ mode) rejected the format. Affected every `type: 'date'` column on any FE-driven
 **Solid**: auth/session lifecycle, purchase→stock IN idempotency, sales→stock OUT (bug A) and the
 ledger-derived product aggregates (bug B), master-data access control (bug C), recap correctness
 (bugs D/E), generic CRUD auto-wiring, MySQL legacy-compat bootstrap.
-**Fragile / still open**: discount/total semantics across invoice creation paths (bug G), status
-casing (bug F), document numbering (bug I), and converted invoices not decrementing stock until
-edited (quote items have no product link).
+**Fragile / still open**: converted invoices not decrementing stock until edited (quote items have no
+product link). Bug H (orphan entities/controllers) has been cleaned up.
 
 ## 10. Suggested fix order (safest first)
 1. ~~**D + E** — recap correctness. Low blast radius, no schema change.~~ ✅ DONE
@@ -255,7 +293,10 @@ edited (quote items have no product link).
 3. ~~**B then A** — stock pair, do together. B needs the opening-balance design decision first.~~ ✅ DONE
 4. ~~**F** — paymentStatus casing.~~ ✅ DONE
 5. ~~**G** — `discount` overload.~~ ✅ DONE
-6. **H, I** — cleanup (orphan entities) & server-side numbering. *(still open)*
+6. ~~**I** — server-authoritative document numbering (atomic counter + row lock).~~ ✅ DONE
+7. ~~**H** — cleanup (orphan entities/controllers).~~ ✅ DONE
+
+**All tracked bugs (A–J) are now fixed.**
 
 Always re-check the impact chain after any change:
 **invoice total → payment status → stock quantity → stock-ledger history → recap/profit.**

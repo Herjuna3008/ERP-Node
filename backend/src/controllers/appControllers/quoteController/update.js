@@ -57,6 +57,8 @@ const update = async (req, res) => {
   if (body.hasOwnProperty('currency')) {
     delete body.currency;
   }
+  // The quote number is server-assigned at creation and immutable thereafter (HANDOVER bug I).
+  delete body.number;
   // Find document by id and updates with the required fields
 
   let result = await Model.findOne({ where: { id: req.params.id, removed: false } });

@@ -2,7 +2,11 @@ const { basename, extname } = require('path');
 const { globSync } = require('glob');
 
 const entityFiles = globSync('./src/entities/*.js');
-const coreExclusions = ['Admin', 'AdminPassword', 'Setting', 'InvoiceItem'];
+// Entities that must NOT get an auto-wired action-suffix CRUD route:
+// - Admin/AdminPassword/Setting: core/admin surface, handled by coreApi.
+// - PurchaseInvoiceItem: a real relation managed only via PurchaseInvoice (cascade); it has no
+//   standalone REST surface (the old purchaseInvoiceItemController was removed — HANDOVER bug H).
+const coreExclusions = ['Admin', 'AdminPassword', 'Setting', 'PurchaseInvoiceItem'];
 
 const constrollersList = [];
 const entityList = [];

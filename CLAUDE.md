@@ -33,7 +33,7 @@ cd frontend && npm run dev      # Vite, http://localhost:5173 (calls backend :88
 
 ### Routing is auto-wired from entities
 1. `models/utils/index.js` globs `entities/*.js` → builds `routesList` (excludes
-   `Admin, AdminPassword, Setting, InvoiceItem`). Each entity `Foo` → `entity: 'foo'`,
+   `Admin, AdminPassword, Setting, PurchaseInvoiceItem`). Each entity `Foo` → `entity: 'foo'`,
    `controllerName: 'fooController'`.
 2. `controllers/appControllers/index.js` globs `appControllers/*/` dirs. If a `fooController`
    dir exists → that **custom controller** is used; otherwise a **generic CRUD controller**
@@ -65,7 +65,7 @@ Read the relevant service before changing a flow.
 
 ### Data model conventions
 - **Sales docs** (`Invoice`, `Quote`) store line `items` as a **`simple-json` blob**, NOT
-  relations. `InvoiceItem` / `PurchaseItem` entities exist but are **unused/orphan**.
+  relations. (The orphan `InvoiceItem` / `PurchaseItem` entities were removed — HANDOVER bug H.)
 - **Purchase docs** use real relations (`PurchaseInvoice` 1—* `PurchaseInvoiceItem`, cascade).
 - **Stock**: `stock_ledger` is the history of truth (`IN`/`OUT`). `Product.stockQuantity`,
   `lastCostPrice`, `lastSellPrice` are aggregates **derived** from the ledger by
@@ -77,6 +77,11 @@ Read the relevant service before changing a flow.
 - **Dates**: every `type: 'date'` column is MySQL `DATE` (date-only). `typeorm-data-source.js`
   (`normalizeDateOnlyColumns`) attaches a transformer that coerces any written value (the FE sends
   full ISO `…T…Z` timestamps) to `YYYY-MM-DD`. Don't re-add per-controller date parsing — see HANDOVER **J**.
+- **Document numbering**: invoice/quote `number` is **server-authoritative** (`services/numberingService.js`).
+  Create flows (incl. quote→invoice convert) call `assignNextNumber` = `max(counter, MAX(live number))+1`
+  under a pessimistic row lock in the same transaction as the insert; the FE-supplied `number` is
+  ignored on create and stripped on update (immutable). Don't reintroduce FE-driven numbering or the
+  old non-atomic `increaseBySettingKey` for these. The counter is global (not per-year). See HANDOVER **I**.
 
 ### Frontend conventions
 - All API calls use the **action-suffix** shape via `request/request.js`
@@ -102,4 +107,5 @@ Read the relevant service before changing a flow.
 A full, verified, ranked list with file:line and fix direction is in **[HANDOVER.md](HANDOVER.md)
 → Known Bugs**. Fixed: sales stock OUT (A), aggregate double-count (B), master-data RBAC (C),
 recap discount + converted-invoice visibility (D, E), paymentStatus casing (F), `discount` overload
-(G). Still open (low priority): orphan entities (H), FE-driven numbering (I).
+(G), date-column coercion (J), server-authoritative numbering (I), orphan-surface cleanup (H).
+**All tracked bugs (A–J) are now fixed.**

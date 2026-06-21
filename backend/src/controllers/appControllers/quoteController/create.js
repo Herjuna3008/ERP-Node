@@ -1,10 +1,8 @@
 const { AppDataSource } = require('@/typeorm-data-source');
-const Model = AppDataSource.getRepository('Quote');
 
-const custom = require('@/controllers/pdfController');
-const { increaseBySettingKey } = require('@/middlewares/settings');
 const { calculate } = require('@/helpers');
 const { addId } = require('@/controllers/middlewaresControllers/createCRUDController/utils');
+const { assignNextNumber } = require('@/services/numberingService');
 const schema = require('./schemaValidate');
 
 const create = async (req, res) => {
@@ -47,14 +45,19 @@ const create = async (req, res) => {
   body['items'] = items;
   body['createdBy'] = req.admin.id;
 
-  let result = await Model.save(Model.create(body));
-  const fileId = 'quote-' + result.id + '.pdf';
-  result.pdf = fileId;
-  const updateResult = await Model.save(result);
-  // Returning successful response
-
-  increaseBySettingKey({
-    settingKey: 'last_quote_number',
+  // Number is server-assigned (HANDOVER bug I): the frontend value is ignored. The counter bump
+  // and the quote insert share one transaction + row lock so concurrent creates can never get the
+  // same number.
+  const updateResult = await AppDataSource.transaction(async (manager) => {
+    const quoteRepo = manager.getRepository('Quote');
+    body['number'] = await assignNextNumber({
+      manager,
+      settingKey: 'last_quote_number',
+      tableName: 'quotes',
+    });
+    let result = await quoteRepo.save(quoteRepo.create(body));
+    result.pdf = 'quote-' + result.id + '.pdf';
+    return quoteRepo.save(result);
   });
 
   // Returning successful response
