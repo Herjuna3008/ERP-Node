@@ -29,6 +29,27 @@ cd frontend && npm run dev      # Vite, http://localhost:5173 (calls backend :88
 - Seed/admin: `cd backend && npm run setup` (and `npm run reset`). A demo admin is bootstrapped
   on first empty-DB run via `setup/bootstrapDefaults.js`.
 
+### Docker (full stack, dev mode)
+```bash
+cp .env.example .env          # set JWT_SECRET (required by compose)
+docker compose up -d --build  # mysql :3307, backend :8888, frontend :3000
+docker compose logs -f backend
+docker compose down -v        # wipe DB volume (re-seeds demo admin on next up)
+```
+- Source is bind-mounted; nodemon / Vite hot-reload inside the containers. `node_modules` live in
+  named volumes (don't mix with host installs).
+- Compose `environment` overrides `backend/.env` DB vars (dotenv never overwrites existing vars).
+- MySQL runs with `--log-bin-trust-function-creators=1`; without it the bootstrap trigger creation
+  fails with `ER_BINLOG_CREATE_ROUTINE_NEED_SUPER`.
+- Backend image installs with `--ignore-scripts` (phantomjs-prebuilt has no linux/arm64 binary), so
+  PDF export does not work in the container on Apple Silicon.
+- Demo login: `admin@admin.com` / `admin123` (from `bootstrapDefaults.js`).
+- Demo data: `cd backend && npm run seed:demo` (API-driven: clients, suppliers, 20 food/grocery products,
+  purchases → stock IN, quotes incl. one convert, invoices + payments → stock OUT, expenses). Refuses to
+  run on a non-empty DB unless `--force`. `npm run recalc:stock` replays the ledger into product aggregates.
+- TypeORM gotcha: filtering a **relation** column needs `where: { product: { id } }`; a bare
+  `{ product: id }` is silently ignored and matches every row (was corrupting stock aggregates).
+
 ## Architecture you must understand before editing
 
 ### Routing is auto-wired from entities

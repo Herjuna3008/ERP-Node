@@ -72,7 +72,7 @@ const loadInvoice = async (id) => {
 };
 
 const persistItems = async (invoice, items = []) => {
-  const existingItems = await PurchaseInvoiceItemRepository.find({ where: { invoice: invoice.id, removed: false } });
+  const existingItems = await PurchaseInvoiceItemRepository.find({ where: { invoice: { id: invoice.id }, removed: false } });
   const incomingIds = items.filter((item) => item.id).map((item) => item.id);
   const toDelete = existingItems.filter((item) => !incomingIds.includes(item.id));
 

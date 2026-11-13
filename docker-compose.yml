@@ -1,10 +1,13 @@
-version: '3.9'
+name: erp-node
 
 services:
   mysql:
     image: mysql:8.0
     container_name: erp-node-mysql
     restart: unless-stopped
+    # App creates BEFORE INSERT triggers at bootstrap; MySQL 8 with binlog on
+    # refuses that for non-SUPER users unless this flag is set.
+    command: --log-bin-trust-function-creators=1
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-erp_node}
       MYSQL_USER: ${MYSQL_USER:-erp_node}
@@ -16,12 +19,55 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-erp_node_root_password}"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 15s
+
+  backend:
+    build: ./backend
+    container_name: erp-node-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # These override backend/.env (dotenv never overwrites an existing env var)
+      NODE_ENV: development
+      PORT: 8888
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-erp_node}
+      DB_USER: ${MYSQL_USER:-erp_node}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-erp_node_password}
+      DB_CONNECTION_RETRIES: 15
+      PUBLIC_SERVER_FILE: http://localhost:8888/
+      OPENSSL_CONF: /dev/null
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./backend:/app
+      - backend-node-modules:/app/node_modules
+
+  frontend:
+    build: ./frontend
+    container_name: erp-node-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_FILE_BASE_URL: http://localhost:8888/
+      VITE_BACKEND_SERVER: http://localhost:8888/
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
 
 volumes:
   mysql-data:
     driver: local
+  backend-node-modules:
+  frontend-node-modules:

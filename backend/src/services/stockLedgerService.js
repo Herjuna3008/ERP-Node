@@ -31,7 +31,7 @@ const recalculateProductAggregates = async (productId) => {
   // product.stockQuantity and re-added the entire ledger on every call -> double
   // counting.) Order ascending so lastCost/lastSell reflect the newest entry.
   const entries = await StockLedgerRepository.find({
-    where: { product: productId },
+    where: { product: { id: productId } },
     order: { created: 'ASC', id: 'ASC' },
   });
   let stockQuantity = 0;
@@ -133,7 +133,7 @@ const removeEntry = async (id) => {
 
 const getLastPrice = async (productId, type = ENTRY_TYPES.IN) => {
   const entry = await StockLedgerRepository.findOne({
-    where: { product: productId, entryType: type },
+    where: { product: { id: productId }, entryType: type },
     order: { created: 'DESC' },
   });
   if (!entry) return null;
@@ -144,7 +144,7 @@ const getLastPricesForProducts = async (productIds = []) => {
   if (!productIds.length) return {};
   const entries = await StockLedgerRepository.find({
     where: {
-      product: In(productIds),
+      product: { id: In(productIds) },
     },
     order: { created: 'DESC' },
   });
